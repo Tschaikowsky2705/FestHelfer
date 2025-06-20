@@ -1,21 +1,16 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>FestHelfer Admin</title>
+    <meta charset="UTF-8">
+    <title>Festhelfer Einsätze</title>
+    <script defer src="main.js"></script>
 </head>
 <body>
-  <h1>Willkommen, <span id="user-email"></span></h1>
-  <button onclick="logout()">Abmelden</button>
+    <h1>Festhelfer Einsätze</h1>
+    <label for="eventSelect">Veranstaltung wählen:</label>
+    <select id="eventSelect"></select>
 
-  <h2>👨‍💼 Admin einladen</h2>
-  <input type="email" id="invite-email" placeholder="E-Mail-Adresse eingeben" />
-  <button onclick="inviteAdmin()">Einladen</button>
-
-  <h2>🎯 Admin-Zugriff pro Veranstaltung</h2>
-  <div id="events"></div>
-
-  <script type="module" src="main.js"></script>
+    <h2>Einsätze</h2>
+    <div id="shiftsContainer"></div>
 </body>
 </html>

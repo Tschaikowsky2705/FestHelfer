@@ -1,13 +1,21 @@
-
 <!DOCTYPE html>
 <html lang="de">
 <head>
-    <meta charset="UTF-8">
-    <title>FestHelfer – Einsätze</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FestHelfer Admin</title>
 </head>
 <body>
-    <h1>Veranstaltungen mit Einsätzen</h1>
-    <div id="events-container">Lade Daten ...</div>
-    <script src="main.js"></script>
+  <h1>Willkommen, <span id="user-email"></span></h1>
+  <button onclick="logout()">Abmelden</button>
+
+  <h2>👨‍💼 Admin einladen</h2>
+  <input type="email" id="invite-email" placeholder="E-Mail-Adresse eingeben" />
+  <button onclick="inviteAdmin()">Einladen</button>
+
+  <h2>🎯 Admin-Zugriff pro Veranstaltung</h2>
+  <div id="events"></div>
+
+  <script type="module" src="main.js"></script>
 </body>
 </html>

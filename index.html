@@ -1,20 +1,18 @@
 <!DOCTYPE html>
-<html>
+<html lang="de">
 <head>
-  <title>FestHelfer – Einsätze planen</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FestHelfer Admin</title>
+  <script type="module" src="admin.js"></script>
 </head>
 <body>
-  <h1>Einsätze planen</h1>
-  <form id="shiftForm">
-    <label>Veranstaltung ID: <input type="number" name="event_id" required></label><br>
-    <label>Titel: <input type="text" name="title" required></label><br>
-    <label>Beschreibung: <textarea name="description"></textarea></label><br>
-    <label>Erwartungen: <textarea name="expectations"></textarea></label><br>
-    <label>Startzeit: <input type="datetime-local" name="start_time" required></label><br>
-    <label>Endzeit: <input type="datetime-local" name="end_time" required></label><br>
-    <label>Max. Helfer: <input type="number" name="max_helpers" min="1" required></label><br>
-    <button type="submit">Einsatz speichern</button>
+  <h2>Admin Login</h2>
+  <form id="login-form">
+    <input type="email" placeholder="E-Mail" id="email" required />
+    <input type="password" placeholder="Passwort" id="password" required />
+    <button type="submit">Einloggen</button>
   </form>
-  <script src="submit.js"></script>
+  <p id="error-msg" style="color: red;"></p>
 </body>
 </html>

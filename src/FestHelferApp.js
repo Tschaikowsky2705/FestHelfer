@@ -1,218 +1,157 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { createClient } from "@supabase/supabase-js";
 
-const initialEvents = [
-  {
-    id: 1,
-    name: "Sommerfest 2025",
-    date: "2025-07-20",
-    tasks: [],
-  },
-];
-
-const ADMIN_PASSWORD = "admin123";
+// Supabase Setup
+const supabaseUrl = "https://eggzzfhqljmijnucnxnq.supabase.co";
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVnZ3p6ZmhxbGptaWpudWNueG5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA0NDQ4ODgsImV4cCI6MjA2NjAyMDg4OH0.fCOh-A_Z6MzUqmCyE7TL-lT1ApP6hAWi9SHzX_0POC8";
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 export default function FestHelferApp() {
-  const [view, setView] = useState("helfer");
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [adminPassword, setAdminPassword] = useState("");
-
-  const [events, setEvents] = useState(initialEvents);
-  const [selectedEvent, setSelectedEvent] = useState(initialEvents[0]);
-  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [joiningTaskId, setJoiningTaskId] = useState(null);
+  const [pw, setPw] = useState("");
+  const [user, setUser] = useState(null);
+  const [error, setError] = useState("");
 
-  const [newEventName, setNewEventName] = useState("");
-  const [newEventDate, setNewEventDate] = useState("");
-  const [newTask, setNewTask] = useState({
-    title: "",
-    description: "",
-    time: "",
-    maxHelpers: 6,
-  });
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [events, setEvents] = useState([]);
+  const [admins, setAdmins] = useState([]);
+  const [accessMap, setAccessMap] = useState({});
 
-  const handleJoin = (taskId) => {
-    if (!name || !email) return;
-    const updatedEvents = events.map((event) => {
-      if (event.id !== selectedEvent.id) return event;
-      return {
-        ...event,
-        tasks: event.tasks.map((task) => {
-          if (task.id !== taskId) return task;
-          if (task.helpers.length >= task.maxHelpers) return task;
-          return {
-            ...task,
-            helpers: [...task.helpers, { name, email }],
-          };
-        }),
-      };
+  const login = async () => {
+    setError("");
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password: pw,
     });
-    setEvents(updatedEvents);
-    setName("");
-    setEmail("");
-    setJoiningTaskId(null);
-  };
-
-  const handleAddEvent = () => {
-    if (!newEventName || !newEventDate) return;
-    const newEvent = {
-      id: events.length + 1,
-      name: newEventName,
-      date: newEventDate,
-      tasks: [],
-    };
-    setEvents([...events, newEvent]);
-    setSelectedEvent(newEvent);
-    setNewEventName("");
-    setNewEventDate("");
-  };
-
-  const handleAddTask = () => {
-    if (!newTask.title || !newTask.time || !newTask.description) return;
-    const updatedEvents = events.map((event) => {
-      if (event.id !== selectedEvent.id) return event;
-      return {
-        ...event,
-        tasks: [
-          ...event.tasks,
-          {
-            ...newTask,
-            id: event.tasks.length + 1,
-            helpers: [],
-          },
-        ],
-      };
-    });
-    setEvents(updatedEvents);
-    setNewTask({ title: "", description: "", time: "", maxHelpers: 6 });
-  };
-
-  const handleAdminLogin = () => {
-    if (adminPassword === ADMIN_PASSWORD) {
-      setIsAdmin(true);
-      setAdminPassword("");
+    if (error) {
+      setError(error.message);
     } else {
-      alert("Falsches Passwort");
+      setUser(data.user);
     }
   };
 
-  return (
-    <div style={{ padding: "1rem", maxWidth: "600px", margin: "auto" }}>
-      <h1>FestHelfer</h1>
-      <nav style={{ marginBottom: "1rem" }}>
-        <button onClick={() => setView("helfer")}>🔧 Helferansicht</button>
-        <button onClick={() => setView("admin")}>🔒 Adminbereich</button>
-      </nav>
+  const logout = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+    setEmail("");
+    setPw("");
+  };
 
-      {view === "admin" && !isAdmin && (
-        <div>
-          <h2>Admin-Login</h2>
-          <input
-            type="password"
-            placeholder="Admin-Passwort"
-            value={adminPassword}
-            onChange={(e) => setAdminPassword(e.target.value)}
-          />
-          <button onClick={handleAdminLogin}>Einloggen</button>
-        </div>
-      )}
+  const inviteAdmin = async () => {
+    const { error } = await supabase.auth.admin.inviteUserByEmail(inviteEmail);
+    if (error) {
+      alert("Fehler: " + error.message);
+    } else {
+      alert("Einladung an " + inviteEmail + " gesendet.");
+      setInviteEmail("");
+    }
+  };
 
-      {view === "admin" && isAdmin && (
-        <>
-          <div>
-            <h2>Neue Veranstaltung anlegen</h2>
-            <input
-              placeholder="Veranstaltungsname"
-              value={newEventName}
-              onChange={(e) => setNewEventName(e.target.value)}
-            />
-            <input
-              type="date"
-              value={newEventDate}
-              onChange={(e) => setNewEventDate(e.target.value)}
-            />
-            <button onClick={handleAddEvent}>Veranstaltung hinzufügen</button>
-          </div>
+  const fetchAdmins = async () => {
+    const { data, error } = await supabase.auth.admin.listUsers();
+    if (!error) {
+      setAdmins(data.users);
+    }
+  };
 
-          <div>
-            <h2>Neuen Einsatz hinzufügen</h2>
-            <input
-              placeholder="Titel"
-              value={newTask.title}
-              onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
-            />
-            <input
-              placeholder="Beschreibung"
-              value={newTask.description}
-              onChange={(e) =>
-                setNewTask({ ...newTask, description: e.target.value })
-              }
-            />
-            <input
-              placeholder="Zeit (z.B. 10:00 - 12:00)"
-              value={newTask.time}
-              onChange={(e) => setNewTask({ ...newTask, time: e.target.value })}
-            />
-            <input
-              type="number"
-              min="1"
-              value={newTask.maxHelpers}
-              onChange={(e) =>
-                setNewTask({ ...newTask, maxHelpers: parseInt(e.target.value) })
-              }
-            />
-            <button onClick={handleAddTask}>Einsatz hinzufügen</button>
-          </div>
-        </>
-      )}
+  const fetchEvents = async () => {
+    const { data, error } = await supabase.from("events").select("*");
+    if (!error) {
+      setEvents(data);
+    }
+  };
 
-      <div>
-        <h2>Veranstaltung wählen</h2>
-        <select
-          value={selectedEvent.id}
-          onChange={(e) => {
-            const id = parseInt(e.target.value);
-            const event = events.find((ev) => ev.id === id);
-            if (event) setSelectedEvent(event);
-          }}
-        >
-          {events.map((ev) => (
-            <option key={ev.id} value={ev.id}>
-              {ev.name} ({ev.date})
-            </option>
-          ))}
-        </select>
+  const fetchAccess = async () => {
+    const { data, error } = await supabase.from("admin_access").select("*");
+    if (!error) {
+      const map = {};
+      data.forEach((entry) => {
+        if (!map[entry.event_id]) map[entry.event_id] = [];
+        map[entry.event_id].push(entry.admin_email);
+      });
+      setAccessMap(map);
+    }
+  };
+
+  const updateAccess = async (eventId, email, hasAccess) => {
+    if (hasAccess) {
+      await supabase.from("admin_access").insert({ event_id: eventId, admin_email: email });
+    } else {
+      await supabase
+        .from("admin_access")
+        .delete()
+        .eq("event_id", eventId)
+        .eq("admin_email", email);
+    }
+    fetchAccess();
+  };
+
+  useEffect(() => {
+    if (user) {
+      fetchEvents();
+      fetchAdmins();
+      fetchAccess();
+    }
+  }, [user]);
+
+  if (!user) {
+    return (
+      <div style={{ maxWidth: 400, margin: "2rem auto" }}>
+        <h2>Admin Login</h2>
+        <input
+          type="email"
+          placeholder="E-Mail"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+        <input
+          type="password"
+          placeholder="Passwort"
+          value={pw}
+          onChange={(e) => setPw(e.target.value)}
+        />
+        <button onClick={login}>Einloggen</button>
+        {error && <p style={{ color: "red" }}>{error}</p>}
       </div>
+    );
+  }
 
-      <h2>{selectedEvent.name}</h2>
-      <p>Datum: {selectedEvent.date}</p>
+  return (
+    <div style={{ maxWidth: 800, margin: "2rem auto" }}>
+      <h2>Willkommen, {user.email}</h2>
+      <button onClick={logout}>Abmelden</button>
 
-      {selectedEvent.tasks.map((task) => (
-        <div key={task.id} style={{ border: "1px solid #ccc", padding: "1rem", margin: "1rem 0" }}>
-          <h3>{task.title}</h3>
-          <p>{task.time}</p>
-          <p>{task.description}</p>
-          <p>{task.helpers.length} / {task.maxHelpers} Helfer eingetragen</p>
+      <h3>📩 Admin einladen</h3>
+      <input
+        type="email"
+        placeholder="E-Mail-Adresse eingeben"
+        value={inviteEmail}
+        onChange={(e) => setInviteEmail(e.target.value)}
+      />
+      <button onClick={inviteAdmin}>Einladen</button>
 
-          {joiningTaskId === task.id ? (
-            <div>
-              <input
-                placeholder="Name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
-              <input
-                placeholder="E-Mail"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-              <button onClick={() => handleJoin(task.id)}>Eintragen</button>
-            </div>
-          ) : task.helpers.length < task.maxHelpers ? (
-            <button onClick={() => setJoiningTaskId(task.id)}>Ich helfe mit!</button>
-          ) : (
-            <p>Alle Helferplätze sind belegt</p>
-          )}
+      <h3>🎯 Admin-Zugriff pro Veranstaltung</h3>
+      {events.map((event) => (
+        <div key={event.id} style={{ border: "1px solid #ccc", padding: 10, marginBottom: 10 }}>
+          <strong>{event.name}</strong>
+          {admins.map((admin) => {
+            const isChecked =
+              accessMap[event.id] && accessMap[event.id].includes(admin.email);
+            return (
+              <div key={admin.id}>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={isChecked}
+                    onChange={(e) =>
+                      updateAccess(event.id, admin.email, e.target.checked)
+                    }
+                  />{" "}
+                  {admin.email}
+                </label>
+              </div>
+            );
+          })}
         </div>
       ))}
     </div>

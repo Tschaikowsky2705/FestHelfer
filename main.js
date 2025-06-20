@@ -1,22 +1,9 @@
 
-// Beispielhafte JS-Datei zum Abruf und Anzeigen von Einsätzen
-document.addEventListener("DOMContentLoaded", async () => {
-    const res = await fetch("/api/shifts"); // Platzhalter-URL
-    const data = await res.json();
-    const container = document.getElementById("events-container");
+// main.js
 
-    container.innerHTML = data.map(event => `
-        <h2>${event.name} (${event.date})</h2>
-        <ul>
-            ${event.shifts.map(shift => `
-                <li>
-                    <strong>${shift.title}</strong><br>
-                    ${shift.description}<br>
-                    Erwartung: ${shift.expectations}<br>
-                    Zeit: ${shift.start_time} – ${shift.end_time}<br>
-                    Max. Helfer: ${shift.max_helpers}
-                </li>
-            `).join("")}
-        </ul>
-    `).join("");
-});
+import { createClient } from '@supabase/supabase-js'
+
+const supabaseUrl = 'https://eggzzfhqljmijnucnxnq.supabase.co'
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVnZ3p6ZmhxbGptaWpudWNueG5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA0NDQ4ODgsImV4cCI6MjA2NjAyMDg4OH0.fCOh-A_Z6MzUqmCyE7TL-lT1ApP6hAWi9SHzX_0POC8'
+
+export const supabase = createClient(supabaseUrl, supabaseKey)

@@ -1,16 +1,24 @@
+
 <!DOCTYPE html>
 <html lang="de">
 <head>
-    <meta charset="UTF-8">
-    <title>Festhelfer Einsätze</title>
-    <script defer src="main.js"></script>
+    <meta charset="UTF-8" />
+    <title>FestHelfer Admin</title>
 </head>
 <body>
-    <h1>Festhelfer Einsätze</h1>
-    <label for="eventSelect">Veranstaltung wählen:</label>
-    <select id="eventSelect"></select>
-
-    <h2>Einsätze</h2>
-    <div id="shiftsContainer"></div>
+    <h2>Admin Login</h2>
+    <div id="login-view">
+        <input type="email" id="email" placeholder="E-Mail-Adresse" />
+        <input type="password" id="password" placeholder="Passwort" />
+        <button onclick="login()">Einloggen</button>
+        <p id="login-error" style="color:red;"></p>
+    </div>
+    <div id="admin-view" style="display:none;">
+        <p id="welcome"></p>
+        <button onclick="logout()">Abmelden</button>
+        <h3>Veranstaltungen</h3>
+        <div id="events"></div>
+    </div>
+    <script src="main.js"></script>
 </body>
 </html>

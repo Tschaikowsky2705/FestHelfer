@@ -133,24 +133,28 @@ export default function FestHelferApp() {
       {events.map((event) => (
         <div key={event.id} style={{ border: "1px solid #ccc", padding: 10, marginBottom: 10 }}>
           <strong>{event.name}</strong>
-          {admins.map((admin) => {
-            const isChecked =
-              accessMap[event.id] && accessMap[event.id].includes(admin.email);
-            return (
-              <div key={admin.id}>
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={isChecked}
-                    onChange={(e) =>
-                      updateAccess(event.id, admin.email, e.target.checked)
-                    }
-                  />{" "}
-                  {admin.email}
-                </label>
-              </div>
-            );
-          })}
+          {admins.length === 0 ? (
+            <p>Nur du bist als Admin eingetragen</p>
+          ) : (
+            admins.map((admin) => {
+              const isChecked =
+                accessMap[event.id] && accessMap[event.id].includes(admin.email);
+              return (
+                <div key={admin.id}>
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={(e) =>
+                        updateAccess(event.id, admin.email, e.target.checked)
+                      }
+                    />{" "}
+                    {admin.email}
+                  </label>
+                </div>
+              );
+            })
+          )}
         </div>
       ))}
     </div>

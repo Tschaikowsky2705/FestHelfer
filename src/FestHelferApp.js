@@ -5,24 +5,7 @@ const initialEvents = [
     id: 1,
     name: "Sommerfest 2025",
     date: "2025-07-20",
-    tasks: [
-      {
-        id: 1,
-        title: "Getränkestand",
-        description: "Ausgabe von Getränken",
-        time: "14:00 - 17:00",
-        maxHelpers: 6,
-        helpers: [],
-      },
-      {
-        id: 2,
-        title: "Aufbau Bühne",
-        description: "Hilfe beim Aufbau der Bühne",
-        time: "09:00 - 11:00",
-        maxHelpers: 3,
-        helpers: [],
-      },
-    ],
+    tasks: [],
   },
 ];
 
@@ -34,6 +17,12 @@ export default function FestHelferApp() {
   const [joiningTaskId, setJoiningTaskId] = useState(null);
   const [newEventName, setNewEventName] = useState("");
   const [newEventDate, setNewEventDate] = useState("");
+  const [newTask, setNewTask] = useState({
+    title: "",
+    description: "",
+    time: "",
+    maxHelpers: 6,
+  });
 
   const handleJoin = (taskId) => {
     if (!name || !email) return;
@@ -43,10 +32,10 @@ export default function FestHelferApp() {
         ...event,
         tasks: event.tasks.map((task) => {
           if (task.id !== taskId) return task;
-          if (task.helpers.length >= task.maxHelpers) return task;
+          if (task.helpers && task.helpers.length >= task.maxHelpers) return task;
           return {
             ...task,
-            helpers: [...task.helpers, { name, email }],
+            helpers: [...(task.helpers || []), { name, email }],
           };
         }),
       };
@@ -70,6 +59,26 @@ export default function FestHelferApp() {
     setSelectedEvent(newEvent);
     setNewEventName("");
     setNewEventDate("");
+  };
+
+  const handleAddTask = () => {
+    if (!newTask.title || !newTask.time || !newTask.description) return;
+    const updatedEvents = events.map((event) => {
+      if (event.id !== selectedEvent.id) return event;
+      return {
+        ...event,
+        tasks: [
+          ...event.tasks,
+          {
+            ...newTask,
+            id: event.tasks.length + 1,
+            helpers: [],
+          },
+        ],
+      };
+    });
+    setEvents(updatedEvents);
+    setNewTask({ title: "", description: "", time: "", maxHelpers: 6 });
   };
 
   return (
@@ -107,6 +116,36 @@ export default function FestHelferApp() {
             </option>
           ))}
         </select>
+      </div>
+
+      <div>
+        <h2>Neuen Einsatz hinzufügen</h2>
+        <input
+          placeholder="Titel"
+          value={newTask.title}
+          onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
+        />
+        <input
+          placeholder="Beschreibung"
+          value={newTask.description}
+          onChange={(e) =>
+            setNewTask({ ...newTask, description: e.target.value })
+          }
+        />
+        <input
+          placeholder="Zeit (z.B. 10:00 - 12:00)"
+          value={newTask.time}
+          onChange={(e) => setNewTask({ ...newTask, time: e.target.value })}
+        />
+        <input
+          type="number"
+          min="1"
+          value={newTask.maxHelpers}
+          onChange={(e) =>
+            setNewTask({ ...newTask, maxHelpers: parseInt(e.target.value) })
+          }
+        />
+        <button onClick={handleAddTask}>Einsatz hinzufügen</button>
       </div>
 
       <h2>{selectedEvent.name}</h2>

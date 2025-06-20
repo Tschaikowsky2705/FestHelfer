@@ -9,14 +9,19 @@ const initialEvents = [
   },
 ];
 
-const ADMIN_PASSWORD = "admin123"; // Einfaches Passwort für Demo-Zwecke
+const ADMIN_PASSWORD = "admin123";
 
 export default function FestHelferApp() {
+  const [view, setView] = useState("helfer");
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [adminPassword, setAdminPassword] = useState("");
+
   const [events, setEvents] = useState(initialEvents);
   const [selectedEvent, setSelectedEvent] = useState(initialEvents[0]);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [joiningTaskId, setJoiningTaskId] = useState(null);
+
   const [newEventName, setNewEventName] = useState("");
   const [newEventDate, setNewEventDate] = useState("");
   const [newTask, setNewTask] = useState({
@@ -25,8 +30,6 @@ export default function FestHelferApp() {
     time: "",
     maxHelpers: 6,
   });
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [adminPassword, setAdminPassword] = useState("");
 
   const handleJoin = (taskId) => {
     if (!name || !email) return;
@@ -58,8 +61,7 @@ export default function FestHelferApp() {
       date: newEventDate,
       tasks: [],
     };
-    const updatedEvents = [...events, newEvent];
-    setEvents(updatedEvents);
+    setEvents([...events, newEvent]);
     setSelectedEvent(newEvent);
     setNewEventName("");
     setNewEventDate("");
@@ -97,8 +99,12 @@ export default function FestHelferApp() {
   return (
     <div style={{ padding: "1rem", maxWidth: "600px", margin: "auto" }}>
       <h1>FestHelfer</h1>
+      <nav style={{ marginBottom: "1rem" }}>
+        <button onClick={() => setView("helfer")}>🔧 Helferansicht</button>
+        <button onClick={() => setView("admin")}>🔒 Adminbereich</button>
+      </nav>
 
-      {!isAdmin ? (
+      {view === "admin" && !isAdmin && (
         <div>
           <h2>Admin-Login</h2>
           <input
@@ -109,7 +115,9 @@ export default function FestHelferApp() {
           />
           <button onClick={handleAdminLogin}>Einloggen</button>
         </div>
-      ) : (
+      )}
+
+      {view === "admin" && isAdmin && (
         <>
           <div>
             <h2>Neue Veranstaltung anlegen</h2>

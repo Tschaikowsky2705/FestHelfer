@@ -1,7 +1,9 @@
 {
-  "name": "festhelfer-basic",
+  "name": "festhelfer",
   "version": "1.0.0",
   "scripts": {
-    "start": "echo no build needed"
-  }
+    "build": "echo 'No build step required'",
+    "start": "node main.js"
+  },
+  "type": "module"
 }

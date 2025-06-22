@@ -1,77 +1,42 @@
 
-const veranstaltungen = [
-    {
-        id: 1,
-        title: "Open-Air-Kino Frauenkappelen 22.08.2025"
-    },
-    {
-        id: 2,
-        title: "Open-Air-Kino Frauenkappelen 23.08.2025"
-    }
-];
+const supabaseUrl = 'https://eggzzfhqljmijnucnxnq.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVnZ3p6ZmhxbGptaWpudWNueG5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA0NDQ4ODgsImV4cCI6MjA2NjAyMDg4OH0.fCOh-A_Z6MzUqmCyE7TL-lT1ApP6hAWi9SHzX_0POC8';
+const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-const einsaetze = [
-    {
-        id: 1,
-        eventId: 1,
-        title: "Aufbau",
-        description: "Infrastruktur aufbauen (Zelt, Tische, Technik)",
-        expectations: "ca. 2 Stunden Zeit",
-        start: "08:00",
-        end: "10:00",
-        max: 6
-    },
-    {
-        id: 2,
-        eventId: 1,
-        title: "Aufbau – Teil 2",
-        description: "Feinaufbau + letzte Vorbereitung",
-        expectations: "1.5 Stunden Einsatz",
-        start: "10:00",
-        end: "12:30",
-        max: 6
-    },
-    {
-        id: 3,
-        eventId: 2,
-        title: "Kinokasse",
-        description: "Gäste begrüßen, Tickets verkaufen",
-        expectations: "Zuverlässigkeit & Freundlichkeit",
-        start: "12:00",
-        end: "13:00",
-        max: 2
-    }
-];
-
-const eventSelect = document.getElementById("eventSelect");
-veranstaltungen.forEach(event => {
-    const opt = document.createElement("option");
-    opt.value = event.id;
-    opt.textContent = event.title;
-    eventSelect.appendChild(opt);
-});
-
-function zeigeEinsaetze() {
-    const auswahl = parseInt(eventSelect.value);
-    const container = document.getElementById("einsaetze");
-    container.innerHTML = "";
-
-    const gefiltert = einsaetze.filter(e => e.eventId === auswahl);
-    if (gefiltert.length === 0) {
-        container.innerHTML = "<p>Keine Einsätze für diese Veranstaltung gefunden.</p>";
+document.addEventListener('DOMContentLoaded', async () => {
+    const viewContainer = document.getElementById('view-container');
+    const { data: events, error: eventError } = await supabase.from('events').select('*').order('date');
+    if (eventError) {
+        viewContainer.innerHTML = '<p>Error loading events.</p>';
+        console.error(eventError);
         return;
     }
 
-    gefiltert.forEach(einsatz => {
-        const el = document.createElement("div");
-        el.className = "einsatz";
-        el.innerHTML = `
-            <strong>${einsatz.title}</strong><br>
-            <p>${einsatz.description}</p>
-            <p><em>Erwartung:</em> ${einsatz.expectations}</p>
-            <p><strong>Zeit:</strong> ${einsatz.start} – ${einsatz.end} Uhr</p>
-            <p><strong>Max. Helfer:</strong> ${einsatz.max}</p>
-        `;
-        container.appendChild(el);
+    const eventList = document.createElement('ul');
+    events.forEach(event => {
+        const li = document.createElement('li');
+        li.textContent = `${event.name} (${event.date})`;
+        li.addEventListener('click', () => loadShifts(event.id));
+        eventList.appendChild(li);
     });
+    viewContainer.appendChild(eventList);
+});
+
+async function loadShifts(eventId) {
+    const viewContainer = document.getElementById('view-container');
+    viewContainer.innerHTML = `<h2>Shifts for Event ID ${eventId}</h2>`;
+    const { data: shifts, error: shiftError } = await supabase.from('shifts').select('*').eq('event_id', eventId).order('start_time');
+    if (shiftError) {
+        viewContainer.innerHTML += '<p>Error loading shifts.</p>';
+        console.error(shiftError);
+        return;
+    }
+
+    const shiftList = document.createElement('ul');
+    shifts.forEach(shift => {
+        const li = document.createElement('li');
+        li.textContent = `${shift.title}: ${shift.start_time}–${shift.end_time} (${shift.max_helpers} helpers)`;
+        shiftList.appendChild(li);
+    });
+    viewContainer.appendChild(shiftList);
 }

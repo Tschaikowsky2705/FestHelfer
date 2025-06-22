@@ -1,24 +1,13 @@
 
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>FestHelfer</title>
-    <style>
-        body { font-family: Arial, sans-serif; padding: 20px; }
-        .einsatz { border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; }
-        select { padding: 5px; font-size: 1rem; }
-    </style>
+    <script src="main.js" defer></script>
 </head>
 <body>
-    <h1>Helfereinsätze</h1>
-    <label for="eventSelect">Veranstaltung wählen:</label>
-    <select id="eventSelect" onchange="zeigeEinsaetze()">
-        <option value="">Bitte wählen …</option>
-    </select>
-    <hr>
-    <div id="einsaetze"></div>
-
-    <script src="main.js"></script>
+    <h1>FestHelfer</h1>
+    <div id="view-container"></div>
 </body>
 </html>

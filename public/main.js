@@ -1,23 +1,43 @@
-import { fetchEvents, fetchShifts, registerHelper } from './submit.js';
+// public/main.js
+import { fetchEvents, fetchShifts } from './submit.js';
 
-const eventSelect     = document.getElementById('event-select');
-const shiftsContainer = document.getElementById('shifts-container');
-const regContainer    = document.getElementById('registration-container');
-const regShiftSelect  = document.getElementById('reg-shift');
-const regForm         = document.getElementById('reg-form');
-const regMsg          = document.getElementById('reg-msg');
+const eventSelect      = document.getElementById('event-select');
+const shiftsContainer  = document.getElementById('shifts-container');
 
-// 1) Beim Laden: Veranstaltungen ziehen
 async function loadEvents() {
-  const events = await fetchEvents();
-  eventSelect.innerHTML = '<option value="">-- bitte wählen --</option>';
-  events.forEach(e => {
-    const opt = document.createElement('option');
-    opt.value       = e.id;
-    opt.textContent = `${e.name} (${e.date})`;
-    eventSelect.appendChild(opt);
-  });
+  try {
+    console.log('▶ loadEvents() startet');
+    const events = await fetchEvents();
+    eventSelect.innerHTML = '<option value="">-- bitte wählen --</option>';
+    events.forEach(e => {
+      const opt = document.createElement('option');
+      opt.value       = e.id;
+      opt.textContent = `${e.name} (${e.date})`;
+      eventSelect.appendChild(opt);
+    });
+  } catch(err) {
+    eventSelect.innerHTML = '<option>(Fehler beim Laden)</option>';
+  }
 }
+
+eventSelect.addEventListener('change', e => {
+  const id = e.target.value;
+  if (id) renderShifts(id);
+  else shiftsContainer.innerHTML = '';
+});
+
+async function renderShifts(eventId) {
+  const shifts = await fetchShifts(eventId);
+  shiftsContainer.innerHTML = shifts.map(s => `
+    <div class="shift-card">
+      <h3>${s.title}</h3>
+      <p>${s.description}</p>
+      <p><strong>Zeit:</strong> ${new Date(s.start_time).toLocaleString()} – ${new Date(s.end_time).toLocaleString()}</p>
+      <p><strong>Erwartung:</strong> ${s.expectations}</p>
+    </div>
+  `).join('');
+}
+
 loadEvents();
 
 // 2) Wenn Event gewählt wird, Shifts laden und Registrierung vorbereiten

@@ -3,48 +3,56 @@
 <head>
   <meta charset="UTF-8" />
   <title>FestHelfer</title>
-  <link rel="stylesheet" href="styles.css" />
+  <style>
+    body { font-family: sans-serif; max-width: 800px; margin: 2em auto; padding: 0 1em; background: #f5f5f5; }
+    header { text-align: center; margin-bottom: 1em; }
+    select, input, button { font-size: 1em; padding: 0.5em; }
+    .message { color: red; margin-top: 0.5em; }
+    .shift-card, .registration { background: #fff; border-radius: 6px; padding: 1em; box-shadow: 0 1px 4px rgba(0,0,0,0.1); margin-top: 1em; }
+    .shift-card h3 { margin-top:0 }
+    #reg-form { margin-top: 1em; }
+    #reg-form label { display: block; margin: 0.5em 0 0.2em; }
+    #reg-msg { margin-top: 0.5em; }
+  </style>
 </head>
 <body>
-  <header>
-    <h1>FestHelfer</h1>
-  </header>
-
-  <main>
-    <section id="event-select-container">
-      <label for="event-select">Veranstaltung wählen:</label>
-      <select id="event-select">
-        <option value="">Lade...</option>
+  <header><h1>FestHelfer</h1></header>
+  
+  <!-- Event-Auswahl -->
+  <div id="event-select-container">
+    <label for="event-select">Veranstaltung wählen:</label>
+    <select id="event-select"><option value="">Lade...</option></select>
+  </div>
+  
+  <!-- Einsätze -->
+  <div id="shifts-container">
+    <div id="shifts-message" class="message">
+      Bitte wähle oben eine Veranstaltung aus, um die Einsätze zu sehen.
+    </div>
+  </div>
+  
+  <hr>
+  
+  <!-- Helfer-Registrierung -->
+  <div id="registration-container" class="registration">
+    <h2>Helfer registrieren</h2>
+    <form id="reg-form">
+      <label for="reg-event">Veranstaltung:</label>
+      <select id="reg-event" required>
+        <option value="">-- bitte wählen --</option>
       </select>
-    </section>
-
-    <section id="shifts-container"></section>
-  </main>
-
+      
+      <label for="reg-email">E-Mail:</label>
+      <input type="email" id="reg-email" required>
+      
+      <label for="reg-name">Name (optional):</label>
+      <input type="text" id="reg-name">
+      
+      <button type="submit">Anmelden</button>
+    </form>
+    <div id="reg-msg"></div>
+  </div>
+  
   <script type="module" src="main.js"></script>
 </body>
 </html>
-<div id="shifts-container"></div>
-
-<hr/>
-
-<section id="registration">
-  <h2>Helfer registrieren</h2>
-  <form id="reg-form">
-    <label for="reg-event">Veranstaltung:</label>
-    <select id="reg-event" required>
-      <option value="">-- bitte wählen --</option>
-    </select>
-    <br/>
-    <label for="reg-email">E-Mail:</label>
-    <input type="email" id="reg-email" required/>
-    <br/>
-    <label for="reg-name">Name (optional):</label>
-    <input type="text" id="reg-name"/>
-    <br/>
-    <button type="submit">Anmelden</button>
-  </form>
-  <p id="reg-msg" style="color:green;"></p>
-</section>
-
-<script type="module" src="main.js"></script>

@@ -3,19 +3,24 @@
 <head>
   <meta charset="UTF-8" />
   <title>FestHelfer</title>
-+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-+ <header>
-+   <h1>FestHelfer</h1>
-+ </header>
-+ <main>
-   <div id="event-select-container">
-     <label for="event-select">Veranstaltung wählen:</label>
-     <select id="event-select"><option>Lade...</option></select>
-   </div>
-   <div id="shifts-container"></div>
-   <script type="module" src="main.js"></script>
-+ </main>
+  <header>
+    <h1>FestHelfer</h1>
+  </header>
+
+  <main>
+    <section id="event-select-container">
+      <label for="event-select">Veranstaltung wählen:</label>
+      <select id="event-select">
+        <option value="">Lade...</option>
+      </select>
+    </section>
+
+    <section id="shifts-container"></section>
+  </main>
+
+  <script type="module" src="main.js"></script>
 </body>
 </html>

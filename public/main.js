@@ -7,32 +7,41 @@ const regShiftSelect  = document.getElementById('reg-shift');
 const regForm         = document.getElementById('reg-form');
 const regMsg          = document.getElementById('reg-msg');
 
-// 1) Beim Laden: Veranstaltungen ziehen
+// 1) Beim Laden: Events abrufen
 async function loadEvents() {
-  const events = await fetchEvents();
-  eventSelect.innerHTML = '<option value="">-- bitte wählen --</option>';
-  events.forEach(e => {
-    const opt = document.createElement('option');
-    opt.value       = e.id;
-    opt.textContent = `${e.name} (${e.date})`;
-    eventSelect.appendChild(opt);
-  });
+  try {
+    console.log('▶ loadEvents()');
+    const events = await fetchEvents();
+    eventSelect.innerHTML = '<option value="">-- bitte wählen --</option>';
+    events.forEach(e => {
+      const opt = document.createElement('option');
+      opt.value       = e.id;
+      opt.textContent = `${e.name} (${e.date})`;
+      eventSelect.appendChild(opt);
+    });
+  } catch (err) {
+    console.error('❌ Fehler loadEvents():', err);
+    eventSelect.innerHTML = '<option>(Fehler beim Laden)</option>';
+  }
 }
 loadEvents();
 
-// 2) Wenn Event gewählt wird, Shifts laden und Registrierung vorbereiten
+// 2) Wenn ein Event gewählt wird, Shifts holen und Registrierung anzeigen
 eventSelect.addEventListener('change', async (e) => {
   const eventId = +e.target.value;
   clearShifts();
   clearRegistration();
   if (!eventId) return;
 
-  const shifts = await fetchShifts(eventId);
-  renderShifts(shifts);
-  setupRegistration(shifts);
+  try {
+    const shifts = await fetchShifts(eventId);
+    renderShifts(shifts);
+    setupRegistration(shifts);
+  } catch (err) {
+    console.error('❌ Fehler beim Laden der Einsätze:', err);
+  }
 });
 
-// Hilfsfunktionen
 function clearShifts() {
   shiftsContainer.innerHTML = '';
 }
@@ -43,33 +52,31 @@ function renderShifts(shifts) {
       <h3>${s.title}</h3>
       <p>${s.description}</p>
       <p><strong>Zeit:</strong>
-         ${new Date(s.start_time).toLocaleString()} – 
-         ${new Date(s.end_time).toLocaleString()}</p>
+         ${new Date(s.start_time).toLocaleString('de-CH')} –
+         ${new Date(s.end_time).toLocaleString('de-CH')}</p>
       <p><strong>Erwartung:</strong> ${s.expectations}</p>
     </div>
   `).join('');
 }
 
 function clearRegistration() {
-  regContainer.style.display    = 'none';
-  regShiftSelect.innerHTML      = '<option value="">-- bitte wählen --</option>';
-  regMsg.textContent            = '';
+  regContainer.style.display   = 'none';
+  regShiftSelect.innerHTML     = '<option value="">-- bitte wählen --</option>';
+  regMsg.textContent           = '';
 }
 
 function setupRegistration(shifts) {
-  // Dropdown für Shifts befüllen
   regShiftSelect.innerHTML = '<option value="">-- bitte wählen --</option>';
   shifts.forEach(s => {
     const opt = document.createElement('option');
     opt.value       = s.id;
-    opt.textContent = `${s.title} (${new Date(s.start_time).toLocaleTimeString()})`;
+    opt.textContent = `${s.title} (${new Date(s.start_time).toLocaleTimeString('de-CH')})`;
     regShiftSelect.appendChild(opt);
   });
-  // Formular zeigen
   regContainer.style.display = 'block';
 }
 
-// 3) Registrierung abschicken
+// 3) Registrierung absenden
 regForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   const shift_id = +regShiftSelect.value;
@@ -78,12 +85,12 @@ regForm.addEventListener('submit', async (e) => {
 
   try {
     await registerHelper({ shift_id, email, name });
-    regMsg.style.color   = 'green';
-    regMsg.textContent   = 'Danke, deine Anmeldung ist eingegangen!';
+    regMsg.style.color         = 'green';
+    regMsg.textContent         = 'Danke, deine Anmeldung ist eingegangen!';
     regForm.reset();
   } catch (err) {
-    console.error(err);
-    regMsg.style.color   = 'red';
-    regMsg.textContent   = 'Fehler bei der Anmeldung.';
+    console.error('❌ Fehler registerHelper():', err);
+    regMsg.style.color         = 'red';
+    regMsg.textContent         = 'Fehler bei der Anmeldung.';
   }
 });

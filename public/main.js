@@ -10,14 +10,16 @@ const regMsg          = document.getElementById('reg-msg');
 async function loadEvents() {
   try {
     const events = await fetchEvents();
-    // beide Dropdowns neu füllen
+    // Obere Auswahl
     eventSelect.innerHTML    = '<option value="">-- bitte wählen --</option>';
+    // Registrierungsauswahl
     regEventSelect.innerHTML = '<option value="">-- bitte wählen --</option>';
     events.forEach(e => {
       const opt = document.createElement('option');
       opt.value       = e.id;
       opt.textContent = `${e.name} (${e.date})`;
       eventSelect.appendChild(opt);
+      // Klonen für das zweite Dropdown
       regEventSelect.appendChild(opt.cloneNode(true));
     });
   } catch (err) {
@@ -64,18 +66,18 @@ regForm.addEventListener('submit', async e => {
   regMsg.textContent = '';
   try {
     await registerHelper({ event_id, email, name });
-    regMsg.style.color   = 'green';
-    regMsg.textContent   = 'Danke, du bist angemeldet!';
+    regMsg.style.color = 'green';
+    regMsg.textContent = 'Danke, du bist angemeldet!';
     regForm.reset();
   } catch (err) {
     console.error('Registrierungs-Fehler', err);
-    regMsg.style.color   = 'red';
-    regMsg.textContent   = 'Fehler bei der Anmeldung.';
+    regMsg.style.color = 'red';
+    regMsg.textContent = 'Fehler bei der Anmeldung.';
   }
 });
 
 eventSelect.addEventListener('change', e => renderShifts(e.target.value));
 
-// Initial-Aufrufe
+// beim Laden der Seite aufrufen
 loadEvents();
 renderShifts();

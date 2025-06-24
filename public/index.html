@@ -33,27 +33,26 @@
     </div>
   </div>
   
-  <hr>
-  
-  <!-- Helfer-Registrierung unten -->
-  <div id="registration-container" class="registration">
-    <h2>Helfer registrieren</h2>
-    <form id="reg-form">
-      <label for="reg-event">Veranstaltung:</label>
-      <select id="reg-event" required>
-        <option value="">-- bitte wählen --</option>
-      </select>
-      
-      <label for="reg-email">E-Mail:</label>
-      <input type="email" id="reg-email" required>
-      
-      <label for="reg-name">Name (optional):</label>
-      <input type="text" id="reg-name">
-      
-      <button type="submit">Anmelden</button>
-    </form>
-    <div id="reg-msg"></div>
-  </div>
+<hr>
+
+<div id="registration-container" class="registration" style="display:none">
+  <h2>Helfer registrieren</h2>
+  <form id="reg-form">
+    <label for="reg-shift">Einsatz wählen:</label>
+    <select id="reg-shift" required>
+      <option value="">-- bitte wählen --</option>
+    </select>
+
+    <label for="reg-email">E-Mail:</label>
+    <input type="email" id="reg-email" required>
+
+    <label for="reg-name">Name (optional):</label>
+    <input type="text" id="reg-name">
+
+    <button type="submit">Anmelden</button>
+  </form>
+  <div id="reg-msg"></div>
+</div>
   
   <!-- Dein JS -->
   <script type="module" src="main.js"></script>

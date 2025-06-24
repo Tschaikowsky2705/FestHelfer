@@ -1,12 +1,16 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>FestHelfer</title>
 </head>
 <body>
-  <div id="app"></div>
-  <script src="main.js"></script>
-  <script src="submit.js"></script>
+  <h1>FestHelfer</h1>
+  <div id="event-select-container">
+    <label for="event-select">Veranstaltung wählen:</label>
+    <select id="event-select"><option>Lade...</option></select>
+  </div>
+  <div id="shifts-container"></div>
+  <script type="module" src="main.js"></script>
 </body>
 </html>

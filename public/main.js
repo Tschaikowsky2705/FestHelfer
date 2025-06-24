@@ -1,4 +1,3 @@
-// public/main.js
 import { fetchEvents, fetchShifts } from './submit.js';
 
 const eventSelect      = document.getElementById('event-select');

@@ -25,20 +25,27 @@ async function loadEvents() {
 
 async function renderShifts(eventId) {
   try {
-    console.log(`🔄 renderShifts(${eventId}) startet`);
     const shifts = await fetchShifts(eventId);
-    console.log('✅ fetchShifts liefert:', shifts);
     shiftsContainer.innerHTML = shifts.map(s => `
-      <div style="margin-bottom:1em;">
-        <strong>${s.title}</strong><br/>
-        ${s.description}<br/>
-        Zeit: ${new Date(s.start_time).toLocaleString()} - ${new Date(s.end_time).toLocaleString()}<br/>
-        Erwartung: ${s.expectations}
-      </div>
+-     <div style="margin-bottom:1em;">
+-       <strong>${s.title}</strong><br/>
+-       ${s.description}<br/>
+-       Zeit: ${new Date(s.start_time).toLocaleString()} - ${new Date(s.end_time).toLocaleString()}<br/>
+-       Erwartung: ${s.expectations}
+-     </div>
++     <div class="shift-card">
++       <strong>${s.title}</strong>
++       <div>${s.description}</div>
++       <div class="shift-time">
++         Zeit: ${new Date(s.start_time).toLocaleString()} – ${new Date(s.end_time).toLocaleString()}
++       </div>
++       <div class="shift-expectation">
++         Erwartung: ${s.expectations}
++       </div>
++     </div>
     `).join('');
   } catch (err) {
-    console.error('❌ Fehler in renderShifts():', err);
-    shiftsContainer.innerHTML = '<p>(Fehler beim Laden der Einsätze)</p>';
+    shiftsContainer.innerHTML = '<p class="error-message">(Fehler beim Laden der Einsätze)</p>';
   }
 }
 

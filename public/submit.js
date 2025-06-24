@@ -21,3 +21,10 @@ export async function fetchShifts(eventId) {
   if (error) throw error;
   return data;
 }
+export async function registerHelper({ event_id, email, name }) {
+  const { data, error } = await supabase
+    .from('registrations')
+    .insert([{ event_id, email, name }]);
+  if (error) throw error;
+  return data;
+}

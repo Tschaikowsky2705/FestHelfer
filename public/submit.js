@@ -1,10 +1,10 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
 const supabaseUrl = 'https://eggzzfhqljmijnucnxnq.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVnZ3p6ZmhxbGptaWpudWNueG5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA0NDQ4ODgsImV4cCI6MjA2NjAyMDg4OH0.fCOh-A_Z6MzUqmCyE7TL-lT1ApP6hAWi9SHzX_0POC8';  // unbedingt hier deinen echten anon-public-Key einsetzen
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVnZ3p6ZmhxbGptaWpudWNueG5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA0NDQ4ODgsImV4cCI6MjA2NjAyMDg4OH0.fCOh-A_Z6MzUqmCyE7TL-lT1ApP6hAWi9SHzX_0POC8';
 const supabase    = createClient(supabaseUrl, supabaseKey);
 
-/** Veranstaltungen auslesen */
+// Veranstaltungen auslesen
 export async function fetchEvents() {
   const { data, error } = await supabase
     .from('events')
@@ -14,20 +14,20 @@ export async function fetchEvents() {
   return data;
 }
 
-/** Einsätze (Shifts) für eine Veranstaltung auslesen */
+// Shifts + aktuelle Anmelde-Zahl holen
 export async function fetchShifts(eventId) {
   const { data, error } = await supabase
     .from('shifts')
-    .select('*')
+    // wir holen alle Felder plus das Array registrations.id
+    .select('*, registrations(id)')
     .eq('event_id', eventId)
-    // zuerst nach Titel sortieren, dann Zeit
     .order('title',      { ascending: true })
     .order('start_time', { ascending: true });
   if (error) throw error;
   return data;
 }
 
-/** Helper-Registrierung speichern */
+// Registrierung speichern
 export async function registerHelper({ shift_id, email, name }) {
   const { error } = await supabase
     .from('registrations')

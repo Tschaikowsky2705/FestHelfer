@@ -1,9 +1,8 @@
-import {
-  fetchEvents,
-  fetchShifts,
-  registerHelper
-} from './submit.js';
+// main.js
 
+import { fetchEvents, fetchShifts, registerHelper } from './submit.js';
+
+// DOM-Elemente
 const eventSelect     = document.getElementById('event-select');
 const shiftsContainer = document.getElementById('shifts-container');
 
@@ -25,9 +24,9 @@ async function loadEvents() {
 }
 loadEvents();
 
-// 2) Nach Event-Auswahl Shifts laden und anzeigen
+// 2) Nach Event-Auswahl Shifts laden
 eventSelect.addEventListener('change', async () => {
-  const eventId = +eventSelect.value;
+  const eventId = Number(eventSelect.value);
   shiftsContainer.innerHTML = '';
   if (!eventId) return;
 
@@ -41,99 +40,81 @@ eventSelect.addEventListener('change', async () => {
   }
 });
 
-/**
- * Zeichnet die Shift-Cards mit Inline-Formular
- */
+// 3) Shifts rendern
 function renderShifts(shifts) {
-  shiftsContainer.innerHTML = shifts
-    .map(s => {
-      const free     = s.max_helpers - s.taken;
-      const disabled = free <= 0 ? 'disabled' : '';
-      return `
+  shiftsContainer.innerHTML = shifts.map(s => {
+    const free     = s.max_helpers - s.taken;
+    const disabled = free <= 0 ? 'disabled' : '';
+    return `
       <div class="shift-card" data-id="${s.id}">
         <h3>${s.title}</h3>
         <p>${s.description}</p>
-        <p><strong>Zeit:</strong>
-           ${new Date(s.start_time).toLocaleString()} – 
-           ${new Date(s.end_time).toLocaleString()}
-        </p>
+        <p><strong>Zeit:</strong> ${new Date(s.start_time).toLocaleString()} – ${new Date(s.end_time).toLocaleString()}</p>
         <p><em>${free} von ${s.max_helpers} Plätzen frei</em></p>
-        <button class="btn-show-form" ${disabled}>
-          ${free > 0 ? 'Anmelden' : 'Ausgebucht'}
-        </button>
-        <form class="reg-form">
+        <button class="btn-show-form" ${disabled}>${free > 0 ? 'Anmelden' : 'Ausgebucht'}</button>
+        <form class="reg-form" style="display:none">
           <input type="email" name="email" placeholder="E-Mail" required />
           <input type="text"  name="name"  placeholder="Name (optional)" />
           <button type="submit">Absenden</button>
           <p class="reg-msg"></p>
         </form>
-      </div>`;
-    })
-    .join('');
+      </div>
+    `;
+  }).join('');
 }
 
-/**
- * Verknüpft Button- und Submit-Handler
- */
+// 4) Event-Handler binden
 function bindHandlers() {
-  // 1) „Anmelden“-Button öffnet das Inline-Formular
+  // a) Formular anzeigen
   shiftsContainer.querySelectorAll('.btn-show-form').forEach(btn => {
     btn.addEventListener('click', () => {
-      shiftsContainer.querySelectorAll('.reg-form')
-        .forEach(f => (f.style.display = 'none'));
+      shiftsContainer.querySelectorAll('.reg-form').forEach(f => f.style.display = 'none');
       const form = btn.nextElementSibling;
       form.style.display = 'block';
       form.scrollIntoView({ behavior: 'smooth', block: 'center' });
     });
   });
 
-  // 2) Formular-Submit pro Karte
+  // b) Formular-Submit
   shiftsContainer.querySelectorAll('.reg-form').forEach(form => {
     form.addEventListener('submit', async e => {
       e.preventDefault();
-      const card     = form.closest('.shift-card');
-      const shift_id = +card.dataset.id;
-      const email    = form.email.value.trim();
-      const name     = form.name.value.trim() || null;
-      const msgEl    = form.querySelector('.reg-msg');
+      const card      = form.closest('.shift-card');
+      const shift_id  = Number(card.dataset.id);
+      const email     = form.email.value.trim();
+      const name      = form.name.value.trim() || null;
+      const msgEl     = form.querySelector('.reg-msg');
 
       try {
-        // a) in DB speichern
+        // 1) In DB speichern
         await registerHelper({ shift_id, email, name });
 
-        // b) Erfolgsmeldung anzeigen
+        // 2) Erfolgsmeldung
         msgEl.style.color   = 'green';
         msgEl.textContent   = 'Danke, deine Anmeldung ist eingegangen!';
 
-// c) Automatisierten Mailversand auslösen
-try {
-  const shiftTitle = card.querySelector('h3').textContent;
-  const payload = { name, email, shiftTitle };
-const mailRes = await fetch('/api/sendNotification', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ name, email, shiftTitle }),
-});
+        // 3) E-Mail an Uwe versenden
+        const shiftTitle = card.querySelector('h3').textContent;
+        const res = await fetch('/api/sendNotification', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, shiftTitle }),
+        });
+        if (!res.ok) throw new Error('Mailversand fehlgeschlagen');
 
-  if (!mailRes.ok) {
-    throw new Error('Mailversand fehlgeschlagen');
-  }
-  // Optional: weitere Bestätigung in der UI
-  console.log('E-Mail erfolgreich gesendet');
-} catch (mailErr) {
-  console.error('Mail-Error:', mailErr);
-  msg1.textContent = 'Anmeldung gespeichert, E-Mail konnte nicht gesendet werden.';
-  msg1.style.color = 'orange';
-}
-
-        // d) Form zurücksetzen und Shifts neu laden
+        // 4) Formular zurücksetzen und Shifts neu laden
         form.reset();
         eventSelect.dispatchEvent(new Event('change'));
 
       } catch (err) {
         console.error(err);
-        msgEl.style.color   = 'red';
-        msgEl.textContent   = 'Fehler bei der Anmeldung.';
+        if (err.message === 'Mailversand fehlgeschlagen') {
+          msgEl.style.color = 'orange';
+          msgEl.textContent = 'Anmeldung gespeichert, E-Mail konnte nicht gesendet werden.';
+        } else {
+          msgEl.style.color = 'red';
+          msgEl.textContent = 'Fehler bei der Anmeldung.';
+        }
       }
     });
   });

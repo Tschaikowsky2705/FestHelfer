@@ -7,38 +7,47 @@ import {
 const eventSelect     = document.getElementById('event-select');
 const shiftsContainer = document.getElementById('shifts-container');
 
-// 1) Events in Dropdown laden
+// 1) Events laden
 async function loadEvents() {
-  const events = await fetchEvents();
-  eventSelect.innerHTML = '<option value="">-- bitte wählen --</option>';
-  events.forEach(e => {
-    const opt = document.createElement('option');
-    opt.value       = e.id;
-    opt.textContent = `${e.name} (${e.date})`;
-    eventSelect.appendChild(opt);
-  });
+  try {
+    const events = await fetchEvents();
+    eventSelect.innerHTML = '<option value="">-- bitte wählen --</option>';
+    events.forEach(e => {
+      const opt = document.createElement('option');
+      opt.value       = e.id;
+      opt.textContent = `${e.name} (${e.date})`;
+      eventSelect.appendChild(opt);
+    });
+  } catch (err) {
+    console.error('Fehler beim Laden der Events:', err);
+    eventSelect.innerHTML = '<option value="">(Fehler beim Laden)</option>';
+  }
 }
 loadEvents();
 
-// 2) Nach Event-Auswahl die Shifts + taken laden und rendern
+// 2) Nach Event-Auswahl Shifts laden und anzeigen
 eventSelect.addEventListener('change', async () => {
   const eventId = +eventSelect.value;
   shiftsContainer.innerHTML = '';
   if (!eventId) return;
 
-  // a) Shifts mit registrations holen
-  const shifts = await fetchShifts(eventId);
-
-  // b) rendern und Handler binden
-  renderShifts(shifts);
-  bindHandlers();
+  try {
+    const shifts = await fetchShifts(eventId);
+    renderShifts(shifts);
+    bindHandlers();
+  } catch (err) {
+    console.error('Fehler beim Laden der Shifts:', err);
+    shiftsContainer.innerHTML = '<p style="color:red">Fehler beim Laden der Einsätze.</p>';
+  }
 });
 
-// Rendert jede Shift als Card mit Taken-Berechnung
+/**
+ * Zeichnet die Shift-Cards mit Inline-Formular
+ */
 function renderShifts(shifts) {
   shiftsContainer.innerHTML = shifts
     .map(s => {
-      const free = s.max_helpers - s.taken;
+      const free     = s.max_helpers - s.taken;
       const disabled = free <= 0 ? 'disabled' : '';
       return `
       <div class="shift-card" data-id="${s.id}">
@@ -63,22 +72,22 @@ function renderShifts(shifts) {
     .join('');
 }
 
-// Bindet Klick- und Submit-Handler auf jede Karte
+/**
+ * Verknüpft Button- und Submit-Handler
+ */
 function bindHandlers() {
-  // „Anmelden“-Button öffnet das Inline-Formular
+  // 1) „Anmelden“-Button öffnet das Inline-Formular
   shiftsContainer.querySelectorAll('.btn-show-form').forEach(btn => {
     btn.addEventListener('click', () => {
-      // alle anderen schließen
       shiftsContainer.querySelectorAll('.reg-form')
         .forEach(f => (f.style.display = 'none'));
-      // dieses öffnen
       const form = btn.nextElementSibling;
       form.style.display = 'block';
       form.scrollIntoView({ behavior: 'smooth', block: 'center' });
     });
   });
 
-  // Formular-Submit je Karte
+  // 2) Formular-Submit pro Karte
   shiftsContainer.querySelectorAll('.reg-form').forEach(form => {
     form.addEventListener('submit', async e => {
       e.preventDefault();
@@ -89,16 +98,34 @@ function bindHandlers() {
       const msgEl    = form.querySelector('.reg-msg');
 
       try {
+        // a) in DB speichern
         await registerHelper({ shift_id, email, name });
-        msgEl.style.color = 'green';
-        msgEl.textContent = 'Danke, deine Anmeldung ist eingegangen!';
+
+        // b) Erfolgsmeldung anzeigen
+        msgEl.style.color   = 'green';
+        msgEl.textContent   = 'Danke, deine Anmeldung ist eingegangen!';
+
+        // c) Mail an Uwe öffnen
+        const shiftTitle = card.querySelector('h3').textContent;
+        const subject    = encodeURIComponent('Neue Helfer-Registrierung');
+        const body       = encodeURIComponent(
+          `Name: ${name || '(kein Name)'}\n` +
+          `E-Mail: ${email}\n` +
+          `Einsatz: ${shiftTitle}`
+        );
+        window.open(
+          `mailto:uwe.baumann@ortsverein-frauenkappelen.ch?subject=${subject}&body=${body}`,
+          '_blank'
+        );
+
+        // d) Form zurücksetzen und Shifts neu laden
         form.reset();
-        // Refresh: neu rendern
         eventSelect.dispatchEvent(new Event('change'));
+
       } catch (err) {
         console.error(err);
-        msgEl.style.color = 'red';
-        msgEl.textContent = err.message || 'Fehler bei der Anmeldung.';
+        msgEl.style.color   = 'red';
+        msgEl.textContent   = 'Fehler bei der Anmeldung.';
       }
     });
   });

@@ -1,46 +1,35 @@
-// api/sendNotification.js
+// pages/api/sendRegistration.js
+
 import nodemailer from 'nodemailer';
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    res.status(405).end(); // Method Not Allowed
-    return;
-  }
+  if (req.method !== 'POST') return res.status(405).end();
 
-  const { email, name, shiftTitle } = req.body;
-  if (!email || !shiftTitle) {
-    res.status(400).json({ error: 'Fehlende Felder' });
-    return;
-  }
+  const { name, email } = req.body;
 
-  // 1) Nodemailer-Transporter mit GMX-SMTP
+  // SMTP-Daten aus Umgebungsvariablen:
+  // GMX_SMTP_USER, GMX_SMTP_PASS
   const transporter = nodemailer.createTransport({
-    host: 'smtp.gmx.net',
+    host: 'mail.gmx.net',
     port: 587,
-    secure: false,          // TLS später
+    secure: false,
     auth: {
-      user: process.env.GMX_USER,
-      pass: process.env.GMX_PASS
-    }
+      user: process.env.GMX_SMTP_USER,
+      pass: process.env.GMX_SMTP_PASS,
+    },
   });
 
-  // 2) E-Mail an Uwe
   try {
     await transporter.sendMail({
-      from: `"FestHelfer" <${process.env.GMX_USER}>`,
-      to:   'uwe.baumann@ortsverein-frauenkappelen.ch',
-      subject: `Neue Helfer-Registrierung: ${shiftTitle}`,
-      text: `
-Ein neuer Helfer hat sich angemeldet:
-
-Name:   ${name || '(kein Name)'}
-E-Mail: ${email}
-Einsatz: ${shiftTitle}
-      `
+      from: `"OpenAir Kino" <${process.env.GMX_SMTP_USER}>`,
+      to: 'uwe.baumann@ortsverein-frauenkappelen.ch',
+      subject: 'Neue Anmeldung Open-Air-Kino',
+      text: `Name: ${name}\nE-Mail: ${email}`,
+      html: `<p><strong>Name:</strong> ${name}<br/><strong>E-Mail:</strong> ${email}</p>`,
     });
-    res.status(200).json({ ok: true });
+    return res.status(200).json({ success: true });
   } catch (err) {
-    console.error('GMX-Mail-Error:', err);
-    res.status(500).json({ error: 'Mailversand fehlgeschlagen' });
+    console.error('Mail-Error:', err);
+    return res.status(500).json({ error: 'Mailversand fehlgeschlagen' });
   }
 }

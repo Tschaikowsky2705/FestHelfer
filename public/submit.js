@@ -1,10 +1,12 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
 const supabaseUrl = 'https://eggzzfhqljmijnucnxnq.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVnZ3p6ZmhxbGptaWpudWNueG5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA0NDQ4ODgsImV4cCI6MjA2NjAyMDg4OH0.fCOh-A_Z6MzUqmCyE7TL-lT1ApP6hAWi9SHzX_0POC8';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVnZ3p6ZmhxbGptaWpudWNueG5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA0NDQ4ODgsImV4cCI6MjA2NjAyMDg4OH0.fCOh-A_Z6MzUqmCyE7TL-lT1ApP6hAWi9SHzX_0POC8'; // <— hier deinen echten Anon Key einsetzen
 const supabase    = createClient(supabaseUrl, supabaseKey);
 
-// Veranstaltungen auslesen
+/**
+ * Veranstaltungen auslesen
+ */
 export async function fetchEvents() {
   const { data, error } = await supabase
     .from('events')
@@ -14,23 +16,42 @@ export async function fetchEvents() {
   return data;
 }
 
-// Shifts + aktuelle Anmelde-Zahl holen
+/**
+ * Einsätze (Shifts) für ein Event auslesen
+ * @param {number} eventId
+ */
 export async function fetchShifts(eventId) {
   const { data, error } = await supabase
     .from('shifts')
-    // wir holen alle Felder plus das Array registrations.id
-    .select('*, registrations(id)')
+    .select('*')
     .eq('event_id', eventId)
-    .order('title',      { ascending: true })
-    .order('start_time', { ascending: true });
+    .order('title', { ascending: true })        // zuerst nach Titel
+    .order('start_time', { ascending: true });  // dann nach Uhrzeit
   if (error) throw error;
   return data;
 }
 
-// Registrierung speichern
+/**
+ * Helper-Registrierung speichern
+ * @param {{ shift_id: number, email: string, name: string|null }} payload
+ */
 export async function registerHelper({ shift_id, email, name }) {
   const { error } = await supabase
     .from('registrations')
     .insert({ shift_id, email, name });
   if (error) throw error;
+}
+
+/**
+ * Zählt, wie viele Helfer sich bereits für diesen Shift angemeldet haben
+ * @param {number} shiftId
+ * @returns {Promise<number>}
+ */
+export async function fetchRegistrationsCount(shiftId) {
+  const { count, error } = await supabase
+    .from('registrations')
+    .select('id', { head: true, count: 'exact' })
+    .eq('shift_id', shiftId);
+  if (error) throw error;
+  return count;
 }

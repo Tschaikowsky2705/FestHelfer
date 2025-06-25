@@ -105,18 +105,26 @@ function bindHandlers() {
         msgEl.style.color   = 'green';
         msgEl.textContent   = 'Danke, deine Anmeldung ist eingegangen!';
 
-        // c) Mail an Uwe öffnen
-        const shiftTitle = card.querySelector('h3').textContent;
-        const subject    = encodeURIComponent('Neue Helfer-Registrierung');
-        const body       = encodeURIComponent(
-          `Name: ${name || '(kein Name)'}\n` +
-          `E-Mail: ${email}\n` +
-          `Einsatz: ${shiftTitle}`
-        );
-        window.open(
-          `mailto:uwe.baumann@ortsverein-frauenkappelen.ch?subject=${subject}&body=${body}`,
-          '_blank'
-        );
+// c) Automatisierten Mailversand auslösen
+try {
+  const shiftTitle = card.querySelector('h3').textContent;
+  const payload = { name, email, shiftTitle };
+  const mailRes = await fetch('/api/sendRegistration', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+
+  if (!mailRes.ok) {
+    throw new Error('Mailversand fehlgeschlagen');
+  }
+  // Optional: weitere Bestätigung in der UI
+  console.log('E-Mail erfolgreich gesendet');
+} catch (mailErr) {
+  console.error('Mail-Error:', mailErr);
+  msg1.textContent = 'Anmeldung gespeichert, E-Mail konnte nicht gesendet werden.';
+  msg1.style.color = 'orange';
+}
 
         // d) Form zurücksetzen und Shifts neu laden
         form.reset();

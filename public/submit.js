@@ -41,11 +41,19 @@ export async function fetchShifts(eventId) {
  * @param {{ shift_id: number, email: string, name: string|null }} params
  */
 export async function registerHelper({ shift_id, email, name }) {
-  // 1) In die Tabelle registrations eintragen
-  const { error: insertError } = await supabase
+  console.log('🔔 registerHelper called with:', { shift_id, email, name });
+  const { data, error } = await supabase
     .from('registrations')
-    .insert({ shift_id, email, name });
-  if (insertError) throw insertError;
+    .insert([{ shift_id, email, name }]);
+
+  if (error) {
+    console.error('❌ Supabase insert error:', error);
+    throw error;           // wirf den Fehler weiter, damit main.js ihn auffängt
+  }
+
+  console.log('✅ Supabase insert success, returned data:', data);
+  return data;
+}
 
   // 2) Den Titel des gebuchten Einsatzes holen
   const { data: [shift], error: shiftError } = await supabase

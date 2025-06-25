@@ -2,92 +2,62 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>FestHelfer</title>
   <style>
     body {
       font-family: sans-serif;
-      max-width: 800px;
-      margin: 2rem auto;
-      padding: 0 1rem;
-      line-height: 1.4;
+      margin: 1em;
+      padding: 0;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
     }
-    h1 {
-      text-align: center;
-    }
+    h1 { text-align: center; }
+    #event-select { width: 100%; padding: .5em; font-size: 1em; }
     .shift-card {
       border: 1px solid #ddd;
-      border-radius: 8px;
-      padding: 1rem;
-      margin-bottom: 1rem;
-      background: #fff;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      border-radius: 6px;
+      padding: 1em;
+      margin: 1em 0;
+      position: relative;
     }
-    #registration-container {
-      border-top: 1px solid #ccc;
-      margin-top: 2rem;
-      padding-top: 1rem;
-      display: none;
-    }
-    label {
-      display: block;
-      margin: 0.5rem 0 0.2rem;
-    }
-    select, input {
-      width: 100%;
-      padding: 0.4rem;
-      margin-bottom: 0.8rem;
-      border: 1px solid #bbb;
-      border-radius: 4px;
-    }
-    button {
-      padding: 0.6rem 1.2rem;
-      border: none;
-      background: #0070f3;
-      color: white;
-      border-radius: 4px;
+    .shift-card h3 { margin-top: 0; }
+    .select-shift {
+      display: inline-block;
+      margin-top: .5em;
+      padding: .5em 1em;
+      font-size: .9em;
       cursor: pointer;
     }
-    button:disabled {
-      background: #aaa;
-      cursor: not-allowed;
+    .reg-form {
+      margin-top: 1em;
+      display: none;
     }
-    #reg-msg {
-      margin-top: 0.6rem;
+    .reg-form input {
+      width: 100%;
+      box-sizing: border-box;
+      padding: .5em;
+      margin: .5em 0;
+    }
+    .reg-form button {
+      padding: .5em 1em;
+    }
+    .reg-msg {
+      margin-top: .5em;
+      font-size: .9em;
     }
   </style>
 </head>
 <body>
   <h1>FestHelfer</h1>
-
-  <!-- Event-Auswahl -->
-  <label for="event-select">Veranstaltung wählen:</label>
-  <select id="event-select">
-    <option value="">Lade Events…</option>
-  </select>
-
-  <!-- Container für Einsätze -->
-  <div id="shifts-container"></div>
-
-  <!-- Helfer-Registrierung -->
-  <div id="registration-container">
-    <h2>Helfer registrieren</h2>
-    <form id="reg-form">
-      <label for="reg-shift">Einsatz wählen:</label>
-      <select id="reg-shift" required>
-        <option value="">-- bitte wählen --</option>
-      </select>
-
-      <label for="reg-email">E-Mail:</label>
-      <input id="reg-email" type="email" required placeholder="Deine E-Mail" />
-
-      <label for="reg-name">Name (optional):</label>
-      <input id="reg-name" type="text" placeholder="z.B. Max Mustermann" />
-
-      <button type="submit">Anmelden</button>
-    </form>
-    <div id="reg-msg"></div>
+  <div id="event-select-container">
+    <label for="event-select">Veranstaltung wählen:</label><br/>
+    <select id="event-select">
+      <option value="">Lade …</option>
+    </select>
   </div>
+  <div id="shifts-container"></div>
 
   <script type="module" src="main.js"></script>
 </body>

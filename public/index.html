@@ -5,56 +5,40 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>FestHelfer</title>
   <style>
-    body { font-family: sans-serif; margin: 1em; max-width: 600px; }
-    #event-container, #registration-container { margin-bottom: 2em; }
+    body { font-family: sans-serif; margin: 1em; max-width: 640px; }
+    #event-container { margin-bottom: 2em; }
     .shift-card {
       border: 1px solid #ddd;
       border-radius: 8px;
       padding: 1em;
       margin-bottom: 1em;
       background: #fdfdfd;
+      position: relative;
     }
-    label { display: block; margin-top: .5em; }
-    select, input { width: 100%; padding: .5em; margin-top: .2em; }
-    button { margin-top: 1em; padding: .5em 1em; }
-    #reg-msg { margin-top: .5em; }
+    .shift-card button { margin-top: .5em; }
+    .reg-form {
+      margin-top: 1em;
+      padding: .5em;
+      border-top: 1px solid #eee;
+    }
+    .reg-form input { width: 100%; padding: .4em; margin: .5em 0; }
+    .reg-form button { display: block; }
+    .reg-msg { margin-top: .5em; }
   </style>
 </head>
 <body>
   <h1>FestHelfer</h1>
 
-  <!-- 1) Event-Auswahl -->
+  <!-- 1) Veranstaltungsauswahl -->
   <div id="event-container">
     <label for="event-select">Veranstaltung wählen:</label>
     <select id="event-select">
-      <option value="">Lade...</option>
+      <option value="">Lade …</option>
     </select>
   </div>
 
-  <!-- 2) Shifts-Liste -->
+  <!-- 2) Shift-Cards -->
   <div id="shifts-container"></div>
-
-  <hr>
-
-  <!-- 3) Registrierung (zunächst versteckt) -->
-  <div id="registration-container" style="display:none">
-    <h2>Helfer registrieren</h2>
-    <form id="reg-form">
-      <label for="reg-shift">Einsatz wählen:</label>
-      <select id="reg-shift">
-        <option value="">-- bitte wählen --</option>
-      </select>
-
-      <label for="reg-email">E-Mail:</label>
-      <input type="email" id="reg-email" required />
-
-      <label for="reg-name">Name (optional):</label>
-      <input type="text" id="reg-name" />
-
-      <button type="submit">Anmelden</button>
-      <p id="reg-msg"></p>
-    </form>
-  </div>
 
   <script type="module" src="main.js"></script>
 </body>

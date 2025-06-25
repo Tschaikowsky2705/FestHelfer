@@ -7,7 +7,7 @@ import {
 const eventSelect     = document.getElementById('event-select');
 const shiftsContainer = document.getElementById('shifts-container');
 
-// 1) Beim Laden: Veranstaltungen aus Supabase ziehen
+// 1) Veranstaltungen laden
 async function loadEvents() {
   const events = await fetchEvents();
   eventSelect.innerHTML = '<option value="">-- bitte wählen --</option>';
@@ -20,7 +20,7 @@ async function loadEvents() {
 }
 loadEvents();
 
-// 2) Wenn eine Veranstaltung gewählt wird, ihre Einsätze holen und rendern
+// 2) Nach Wahl: Shifts laden und rendern
 eventSelect.addEventListener('change', async e => {
   shiftsContainer.innerHTML = '';
   const eventId = +e.target.value;
@@ -29,9 +29,13 @@ eventSelect.addEventListener('change', async e => {
   renderShifts(shifts);
 });
 
-// 3) Shifts rendern – jeder nur einmal, mit eigenem Formular
 function renderShifts(shifts) {
-  shiftsContainer.innerHTML = shifts.map(s => `
+  shiftsContainer.innerHTML = shifts.map(s => {
+    const taken = s.registrations.length;
+    const total = s.max_helpers;
+    const free  = total - taken;
+    const isFull = free <= 0;
+    return `
     <div class="shift-card" data-shift-id="${s.id}">
       <h3>${s.title}</h3>
       <p>${s.description}</p>
@@ -39,38 +43,39 @@ function renderShifts(shifts) {
          ${new Date(s.start_time).toLocaleString()} – 
          ${new Date(s.end_time).toLocaleString()}</p>
       <p><strong>Erwartung:</strong> ${s.expectations}</p>
-      <button class="select-shift">Diesen Einsatz wählen</button>
+      <p><em>${taken} von ${total} Helfern eingetragen (${free} frei)</em></p>
+      <button class="select-shift" ${isFull ? 'disabled' : ''}>
+        ${isFull ? 'Ausgebucht' : 'Diesen Einsatz wählen'}
+      </button>
       <form class="reg-form">
         <input type="email" name="email" placeholder="E-Mail" required />
-        <input type="text" name="name" placeholder="Name (optional)" />
+        <input type="text"  name="name"  placeholder="Name (optional)" />
         <button type="submit">Anmelden</button>
         <div class="reg-msg"></div>
       </form>
     </div>
-  `).join('');
+    `;
+  }).join('');
 }
 
-// 4) Event-Delegation für Auswahl und Abschicken
+// 3) Delegierter Klick-Handler
 shiftsContainer.addEventListener('click', async e => {
   const card = e.target.closest('.shift-card');
   if (!card) return;
 
-  // a) Klick auf "Diesen Einsatz wählen"
+  // a) Klick auf „Diesen Einsatz wählen“
   if (e.target.matches('.select-shift')) {
-    // alle Formulare schließen
     shiftsContainer.querySelectorAll('.reg-form')
       .forEach(f => f.style.display = 'none');
-    // dieses öffnen
     const form = card.querySelector('.reg-form');
     form.style.display = 'block';
-    // Scrollen falls nötig
     form.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 
-  // b) Abschicken des Formulars
-  if (e.target.matches('.reg-form button')) {
+  // b) Absenden des Formulars
+  if (e.target.closest('.reg-form') && e.target.matches('button')) {
     e.preventDefault();
-    const form = card.querySelector('.reg-form');
+    const form   = card.querySelector('.reg-form');
     const shift_id = +card.dataset.shiftId;
     const email    = form.email.value.trim();
     const name     = form.name.value.trim() || null;
@@ -81,6 +86,10 @@ shiftsContainer.addEventListener('click', async e => {
       msgEl.style.color = 'green';
       msgEl.textContent = 'Danke, deine Anmeldung ist eingegangen!';
       form.reset();
+      // Karte neu laden, damit freie Plätze / Button-Status aktualisiert
+      const eventId = +eventSelect.value;
+      const shifts  = await fetchShifts(eventId);
+      renderShifts(shifts);
     } catch (err) {
       console.error(err);
       msgEl.style.color = 'red';

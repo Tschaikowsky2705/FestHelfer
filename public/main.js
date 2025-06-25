@@ -109,11 +109,11 @@ function bindHandlers() {
 try {
   const shiftTitle = card.querySelector('h3').textContent;
   const payload = { name, email, shiftTitle };
-  const mailRes = await fetch('/api/sendRegistration', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
+const mailRes = await fetch('/api/sendNotification', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ name, email, shiftTitle }),
+});
 
   if (!mailRes.ok) {
     throw new Error('Mailversand fehlgeschlagen');

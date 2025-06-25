@@ -1,24 +1,37 @@
-// pages/api/sendRegistration.js
-
+import { createClient } from '@supabase/supabase-js';
 import nodemailer from 'nodemailer';
+
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_ANON_KEY
+);
+
+const transporter = nodemailer.createTransport({
+  host: 'mail.gmx.net',
+  port: 587,
+  secure: false,
+  auth: {
+    user: process.env.GMX_SMTP_USER,
+    pass: process.env.GMX_SMTP_PASS,
+  },
+});
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
 
   const { name, email } = req.body;
 
-  // SMTP-Daten aus Umgebungsvariablen:
-  // GMX_SMTP_USER, GMX_SMTP_PASS
-  const transporter = nodemailer.createTransport({
-    host: 'mail.gmx.net',
-    port: 587,
-    secure: false,
-    auth: {
-      user: process.env.GMX_SMTP_USER,
-      pass: process.env.GMX_SMTP_PASS,
-    },
-  });
+  // 1) In Supabase speichern
+  const { error: dbError } = await supabase
+    .from('registrations')
+    .insert([{ name, email }]);
 
+  if (dbError) {
+    console.error('Supabase Error:', dbError);
+    return res.status(500).json({ error: 'DB-Fehler' });
+  }
+
+  // 2) E-Mail an Uwe Baumann schicken
   try {
     await transporter.sendMail({
       from: `"OpenAir Kino" <${process.env.GMX_SMTP_USER}>`,
@@ -28,8 +41,8 @@ export default async function handler(req, res) {
       html: `<p><strong>Name:</strong> ${name}<br/><strong>E-Mail:</strong> ${email}</p>`,
     });
     return res.status(200).json({ success: true });
-  } catch (err) {
-    console.error('Mail-Error:', err);
+  } catch (mailErr) {
+    console.error('Mail-Error:', mailErr);
     return res.status(500).json({ error: 'Mailversand fehlgeschlagen' });
   }
 }

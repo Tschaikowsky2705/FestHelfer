@@ -11,10 +11,7 @@
       max-width: 600px;
       padding: 0 1em;
     }
-    h1 {
-      text-align: center;
-      margin-bottom: 1em;
-    }
+    h1 { text-align: center; margin-bottom: 1em; }
     #event-select-container {
       text-align: center;
       margin-bottom: 1.5em;
@@ -31,19 +28,12 @@
       padding: 1em;
       margin-bottom: 1em;
       background: #fafafa;
-      position: relative;
     }
-    .shift-card h3 {
-      margin-top: 0;
-      margin-bottom: .5em;
-    }
-    .shift-card p {
-      margin: .3em 0;
-    }
+    .shift-card h3 { margin: .5em 0; }
+    .shift-card p { margin: .3em 0; }
     .shift-card button {
       margin-top: .8em;
       padding: .5em 1em;
-      font-size: 1em;
     }
     .reg-form {
       margin-top: 1em;
@@ -68,24 +58,25 @@
     @media (max-width: 480px) {
       body { padding: 0 .5em; }
       .shift-card { padding: .8em; }
-      .shift-card button, .reg-form button {
-        width: 100%;
-      }
-      #event-select {
-        max-width: 100%;
-      }
+      .shift-card button, .reg-form button { width: 100%; }
+      #event-select { max-width: 100%; }
     }
   </style>
 </head>
 <body>
   <h1>FestHelfer</h1>
+
+  <!-- 1) Event-Auswahl -->
   <div id="event-select-container">
     <label for="event-select">Veranstaltung wählen:</label><br/>
     <select id="event-select">
-      <option value="">Lade…</option>
+      <option value="">Lade …</option>
     </select>
   </div>
+
+  <!-- 2) Shift-Cards -->
   <div id="shifts-container"></div>
-  <script type="module" src="main.js"></script>
+
+  <script type="module" src="./main.js"></script>
 </body>
 </html>

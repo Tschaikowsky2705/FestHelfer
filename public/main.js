@@ -1,11 +1,16 @@
 import {
   fetchEvents,
   fetchShifts,
+  fetchRegistrationsCount,
   registerHelper
 } from './submit.js';
 
 const eventSelect     = document.getElementById('event-select');
 const shiftsContainer = document.getElementById('shifts-container');
+const regContainer    = document.getElementById('registration-container');
+const regShiftSelect  = document.getElementById('reg-shift');
+const regForm         = document.getElementById('reg-form');
+const regMsg          = document.getElementById('reg-msg');
 
 // 1) Veranstaltungen laden
 async function loadEvents() {
@@ -20,80 +25,92 @@ async function loadEvents() {
 }
 loadEvents();
 
-// 2) Nach Wahl: Shifts laden und rendern
-eventSelect.addEventListener('change', async e => {
-  shiftsContainer.innerHTML = '';
+// 2) Wenn der Benutzer eine Veranstaltung auswählt …
+eventSelect.addEventListener('change', async (e) => {
   const eventId = +e.target.value;
+  clearShifts();
+  clearRegistration();
   if (!eventId) return;
-  const shifts = await fetchShifts(eventId);
+
+  // 2a) Shifts und Counts holen
+  const rawShifts = await fetchShifts(eventId);
+  const shifts = await Promise.all(
+    rawShifts.map(async s => ({
+      ...s,
+      taken: await fetchRegistrationsCount(s.id)
+    }))
+  );
+
   renderShifts(shifts);
+  setupRegistration(shifts);
 });
 
+// Leert die Shift-Ansicht
+function clearShifts() {
+  shiftsContainer.innerHTML = '';
+}
+
+// Zeichnet alle Shifts-Karten mit Restplätzen
 function renderShifts(shifts) {
-  shiftsContainer.innerHTML = shifts.map(s => {
-    const taken = s.registrations.length;
-    const total = s.max_helpers;
-    const free  = total - taken;
-    const isFull = free <= 0;
-    return `
-    <div class="shift-card" data-shift-id="${s.id}">
+  shiftsContainer.innerHTML = shifts.map(s => `
+    <div class="shift-card">
       <h3>${s.title}</h3>
       <p>${s.description}</p>
       <p><strong>Zeit:</strong>
          ${new Date(s.start_time).toLocaleString()} – 
          ${new Date(s.end_time).toLocaleString()}</p>
       <p><strong>Erwartung:</strong> ${s.expectations}</p>
-      <p><em>${taken} von ${total} Helfern eingetragen (${free} frei)</em></p>
-      <button class="select-shift" ${isFull ? 'disabled' : ''}>
-        ${isFull ? 'Ausgebucht' : 'Diesen Einsatz wählen'}
-      </button>
-      <form class="reg-form">
-        <input type="email" name="email" placeholder="E-Mail" required />
-        <input type="text"  name="name"  placeholder="Name (optional)" />
-        <button type="submit">Anmelden</button>
-        <div class="reg-msg"></div>
-      </form>
+      <p><em>${s.max_helpers - s.taken} von ${s.max_helpers} frei</em></p>
     </div>
-    `;
-  }).join('');
+  `).join('');
 }
 
-// 3) Delegierter Klick-Handler
-shiftsContainer.addEventListener('click', async e => {
-  const card = e.target.closest('.shift-card');
-  if (!card) return;
+// Versteckt das Registrierungsformular
+function clearRegistration() {
+  regContainer.style.display    = 'none';
+  regShiftSelect.innerHTML      = '<option value="">-- bitte wählen --</option>';
+  regMsg.textContent            = '';
+}
 
-  // a) Klick auf „Diesen Einsatz wählen“
-  if (e.target.matches('.select-shift')) {
-    shiftsContainer.querySelectorAll('.reg-form')
-      .forEach(f => f.style.display = 'none');
-    const form = card.querySelector('.reg-form');
-    form.style.display = 'block';
-    form.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }
+// Befüllt Dropdown & zeigt das Registrierungsformular
+function setupRegistration(shifts) {
+  regShiftSelect.innerHTML = '<option value="">-- bitte wählen --</option>';
+  shifts.forEach(s => {
+    const opt = document.createElement('option');
+    opt.value       = s.id;
+    opt.textContent = `${s.title} (${new Date(s.start_time).toLocaleTimeString()})`;
+    regShiftSelect.appendChild(opt);
+  });
+  regContainer.style.display = 'block';
+}
 
-  // b) Absenden des Formulars
-  if (e.target.closest('.reg-form') && e.target.matches('button')) {
-    e.preventDefault();
-    const form   = card.querySelector('.reg-form');
-    const shift_id = +card.dataset.shiftId;
-    const email    = form.email.value.trim();
-    const name     = form.name.value.trim() || null;
-    const msgEl    = form.querySelector('.reg-msg');
+// 3) Formular absenden: in DB eintragen und Counts/Karten neu rendern
+regForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const shift_id = +regShiftSelect.value;
+  const email    = document.getElementById('reg-email').value.trim();
+  const name     = document.getElementById('reg-name').value.trim() || null;
 
-    try {
-      await registerHelper({ shift_id, email, name });
-      msgEl.style.color = 'green';
-      msgEl.textContent = 'Danke, deine Anmeldung ist eingegangen!';
-      form.reset();
-      // Karte neu laden, damit freie Plätze / Button-Status aktualisiert
-      const eventId = +eventSelect.value;
-      const shifts  = await fetchShifts(eventId);
-      renderShifts(shifts);
-    } catch (err) {
-      console.error(err);
-      msgEl.style.color = 'red';
-      msgEl.textContent = 'Fehler bei der Anmeldung.';
-    }
+  try {
+    await registerHelper({ shift_id, email, name });
+    regMsg.style.color   = 'green';
+    regMsg.textContent   = 'Danke, deine Anmeldung ist eingegangen!';
+    regForm.reset();
+
+    // Karten und Dropdown aktualisieren
+    const rawShifts = await fetchShifts(+eventSelect.value);
+    const shifts = await Promise.all(
+      rawShifts.map(async s => ({
+        ...s,
+        taken: await fetchRegistrationsCount(s.id)
+      }))
+    );
+    renderShifts(shifts);
+    setupRegistration(shifts);
+
+  } catch (err) {
+    console.error(err);
+    regMsg.style.color   = 'red';
+    regMsg.textContent   = 'Fehler bei der Anmeldung.';
   }
 });

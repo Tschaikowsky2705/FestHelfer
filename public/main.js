@@ -7,12 +7,8 @@ import {
 
 const eventSelect     = document.getElementById('event-select');
 const shiftsContainer = document.getElementById('shifts-container');
-const regContainer    = document.getElementById('registration-container');
-const regShiftSelect  = document.getElementById('reg-shift');
-const regForm         = document.getElementById('reg-form');
-const regMsg          = document.getElementById('reg-msg');
 
-// 1) Beim Laden: Veranstaltungen ziehen und Dropdown füllen
+// 1) Events laden
 async function loadEvents() {
   const events = await fetchEvents();
   eventSelect.innerHTML = '<option value="">-- bitte wählen --</option>';
@@ -25,81 +21,85 @@ async function loadEvents() {
 }
 loadEvents();
 
-// 2) Wenn eine Veranstaltung ausgewählt wird
-eventSelect.addEventListener('change', async e => {
-  const eventId = +e.target.value;
-  clearShifts();
-  clearRegistration();
+// 2) Wenn Event gewählt
+eventSelect.addEventListener('change', async () => {
+  const eventId = +eventSelect.value;
+  shiftsContainer.innerHTML = '';
   if (!eventId) return;
-
-  // a) Shifts holen
-  const rawShifts = await fetchShifts(eventId);
-
-  // b) Für jedes Shift die aktuellen Anmeldungen zählen
-  const shifts = await Promise.all(rawShifts.map(async s => {
+  // a) alle Shifts holen
+  const raw = await fetchShifts(eventId);
+  // b) pro Shift die aktuelle Belegung holen
+  const shifts = await Promise.all(raw.map(async s => {
     const taken = await fetchRegistrationsCount(s.id);
     return { ...s, taken };
   }));
-
-  // c) Shifts anzeigen und Registrierungs-Dropdown vorbereiten
+  // c) anzeigen
   renderShifts(shifts);
-  setupRegistration(shifts);
+  bindRegistrationHandlers();
 });
 
-// Leert die Card-Liste
-function clearShifts() {
-  shiftsContainer.innerHTML = '';
-}
-
-// Rendert die einzelnen Shift-Cards inkl. freier Plätze
+// Rendert die Cards mit Inline-Form
 function renderShifts(shifts) {
-  shiftsContainer.innerHTML = shifts.map(s => `
-    <div class="shift-card">
-      <h3>${s.title}</h3>
-      <p>${s.description}</p>
-      <p><strong>Zeit:</strong>
-         ${new Date(s.start_time).toLocaleString()} – 
-         ${new Date(s.end_time).toLocaleString()}
-      </p>
-      <p><em>${s.max_helpers - s.taken} von ${s.max_helpers} frei</em></p>
-    </div>
-  `).join('');
+  shiftsContainer.innerHTML = shifts
+    // zuerst nach Titel, dann Zeit sortieren
+    .sort((a,b) => a.title.localeCompare(b.title) || new Date(a.start_time) - new Date(b.start_time))
+    .map(s => `
+      <div class="shift-card" data-id="${s.id}">
+        <h3>${s.title}</h3>
+        <p>${s.description}</p>
+        <p><strong>Zeit:</strong>
+           ${new Date(s.start_time).toLocaleString()} – 
+           ${new Date(s.end_time).toLocaleString()}
+        </p>
+        <p><em>${s.max_helpers - s.taken} von ${s.max_helpers} frei</em></p>
+        <button class="btn-show-form"${s.taken >= s.max_helpers ? ' disabled' : ''}>
+          ${s.taken >= s.max_helpers ? 'Ausgebucht' : 'Anmelden'}
+        </button>
+        <form class="reg-form" style="display:none">
+          <input type="email" name="email" placeholder="E-Mail" required />
+          <input type="text"  name="name"  placeholder="Name (optional)" />
+          <button type="submit">Absenden</button>
+          <p class="reg-msg"></p>
+        </form>
+      </div>
+    `).join('');
 }
 
-// Blendet das Registrierungsformular aus und leert es
-function clearRegistration() {
-  regContainer.style.display = 'none';
-  regShiftSelect.innerHTML   = '<option value="">-- bitte wählen --</option>';
-  regMsg.textContent         = '';
+// Verknüpft Button- und Submit-Handler
+function bindRegistrationHandlers() {
+  shiftsContainer.querySelectorAll('.btn-show-form')
+    .forEach(btn => {
+      btn.addEventListener('click', () => {
+        // alle anderen schließen
+        shiftsContainer.querySelectorAll('.reg-form')
+          .forEach(f => f.style.display = 'none');
+        // dieses aufklappen
+        const form = btn.nextElementSibling;
+        form.style.display = form.style.display === 'none' ? 'block' : 'none';
+      });
+    });
+
+  shiftsContainer.querySelectorAll('.reg-form')
+    .forEach(form => {
+      form.addEventListener('submit', async e => {
+        e.preventDefault();
+        const card     = form.closest('.shift-card');
+        const shift_id = +card.dataset.id;
+        const email    = form.email.value.trim();
+        const name     = form.name.value.trim() || null;
+        const msgEl    = form.querySelector('.reg-msg');
+
+        try {
+          await registerHelper({ shift_id, email, name });
+          msgEl.style.color = 'green';
+          msgEl.textContent = 'Danke, deine Anmeldung ist eingegangen!';
+          form.reset();
+          // optional: Button deaktivieren, wenn ausgebucht
+        } catch (err) {
+          console.error(err);
+          msgEl.style.color = 'red';
+          msgEl.textContent = 'Fehler bei der Anmeldung.';
+        }
+      });
+    });
 }
-
-// Füllt das Dropdown & zeigt das Formular
-function setupRegistration(shifts) {
-  regShiftSelect.innerHTML = '<option value="">-- bitte wählen --</option>';
-  shifts.forEach(s => {
-    const opt = document.createElement('option');
-    opt.value       = s.id;
-    opt.textContent = `${s.title} (${new Date(s.start_time).toLocaleTimeString()})`;
-    regShiftSelect.appendChild(opt);
-  });
-  regContainer.style.display = 'block';
-}
-
-// 3) Beim Abschicken: Helper registrieren
-regForm.addEventListener('submit', async e => {
-  e.preventDefault();
-  const shift_id = +regShiftSelect.value;
-  const email    = document.getElementById('reg-email').value.trim();
-  const name     = document.getElementById('reg-name').value.trim() || null;
-
-  try {
-    await registerHelper({ shift_id, email, name });
-    regMsg.style.color   = 'green';
-    regMsg.textContent   = 'Danke, deine Anmeldung ist eingegangen!';
-    regForm.reset();
-  } catch (err) {
-    console.error(err);
-    regMsg.style.color   = 'red';
-    regMsg.textContent   = 'Fehler bei der Anmeldung.';
-  }
-});

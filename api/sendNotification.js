@@ -1,59 +1,57 @@
 // /api/sendNotification.js
-
 import { createClient } from '@supabase/supabase-js';
 import nodemailer from 'nodemailer';
 
-// Supabase-Client initialisieren
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_ANON_KEY
 );
-
-// Nodemailer-Transporter mit GMX-SMTP
 const transporter = nodemailer.createTransport({
   host: 'mail.gmx.net',
   port: 587,
-  secure: false, // TLS wird mit STARTTLS ausgehandelt
+  secure: false,
   auth: {
     user: process.env.GMX_SMTP_USER,
     pass: process.env.GMX_SMTP_PASS,
   },
 });
 
-// Serverless-Function-Handler
 export default async function handler(req, res) {
-  // Nur POST-Anfragen akzeptieren
   if (req.method !== 'POST') {
-    res.setHeader('Allow', ['POST']);
-    return res.status(405).json({ error: `Method ${req.method} Not Allowed` });
+    return res
+      .status(405)
+      .json({ error: `Method ${req.method} Not Allowed` });
   }
 
   const { name, email, shiftTitle } = req.body;
-
-  // Pflichtfelder prüfen
   if (!name || !email || !shiftTitle) {
-    return res.status(400).json({ error: 'Fehlende Felder: name, email, shiftTitle' });
+    return res
+      .status(400)
+      .json({ error: 'Fehlende Felder: name, email oder shiftTitle' });
   }
 
-  // 1) In Supabase speichern
-  const { error: dbError } = await supabase
-    .from('registrations')
-    .insert([{
-      name,
-      email,
-      shift_title: shiftTitle, // Spalte in deiner DB
-    }]);
+  // **Debug-Logs**
+  console.log('Request Body:', req.body);
+  console.log('SMTP user loaded?', !!process.env.GMX_SMTP_USER);
 
-  if (dbError) {
-    console.error('Supabase Error:', dbError);
-    return res.status(500).json({ error: 'Datenbank-Fehler beim Speichern' });
+  // 1) Supabase eintrag
+  try {
+    const { error: dbError } = await supabase
+      .from('registrations')
+      .insert([{ name, email, shift_title: shiftTitle }]);
+    if (dbError) throw dbError;
+  } catch (err) {
+    console.error('Supabase-Error:', err);
+    return res
+      .status(500)
+      .json({ step: 'supabase', message: err.message });
   }
 
-  // 2) E-Mail an Uwe Baumann senden
+  // 2) Mail-Versand
   try {
     await transporter.sendMail({
       from: `"OpenAir Kino" <${process.env.GMX_SMTP_USER}>`,
-      to: 'uwe.baumann@ortsverein-frauenkappelen.ch',
+      to:   'uwe.baumann@ortsverein-frauenkappelen.ch',
       subject: 'Neue Helfer-Registrierung',
       text:
         `Name: ${name}\n` +
@@ -65,11 +63,13 @@ export default async function handler(req, res) {
         <strong>Einsatz:</strong> ${shiftTitle}</p>
       `,
     });
-  } catch (mailError) {
-    console.error('Mail send error:', mailError);
-    return res.status(500).json({ error: 'Fehler beim Senden der Benachrichtigungs-Mail' });
+  } catch (err) {
+    console.error('Mail-Error:', err);
+    return res
+      .status(500)
+      .json({ step: 'mail', message: err.message });
   }
 
-  // Erfolg
+  // wenn alles ok:
   return res.status(200).json({ success: true });
 }

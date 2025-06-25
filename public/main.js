@@ -1,17 +1,15 @@
 import {
   fetchEvents,
   fetchShifts,
-  fetchRegistrationsCount,
   registerHelper
 } from './submit.js';
 
 const eventSelect     = document.getElementById('event-select');
 const shiftsContainer = document.getElementById('shifts-container');
 
-// 1) Events laden
+// 1) Events in Dropdown laden
 async function loadEvents() {
   const events = await fetchEvents();
-  // placeholder zurücksetzen
   eventSelect.innerHTML = '<option value="">-- bitte wählen --</option>';
   events.forEach(e => {
     const opt = document.createElement('option');
@@ -22,33 +20,23 @@ async function loadEvents() {
 }
 loadEvents();
 
-// 2) Wenn Event ausgewählt
+// 2) Nach Event-Auswahl die Shifts + taken laden und rendern
 eventSelect.addEventListener('change', async () => {
   const eventId = +eventSelect.value;
   shiftsContainer.innerHTML = '';
   if (!eventId) return;
 
-  // Shifts abrufen
-  const rawShifts = await fetchShifts(eventId);
-  // pro Shift Anzahl Registrierungen holen
-  const shifts = await Promise.all(
-    rawShifts.map(async s => {
-      const taken = await fetchRegistrationsCount(s.id);
-      return { ...s, taken };
-    })
-  );
+  // a) Shifts mit registrations holen
+  const shifts = await fetchShifts(eventId);
 
+  // b) rendern und Handler binden
   renderShifts(shifts);
   bindHandlers();
 });
 
-// rendert die Karten
+// Rendert jede Shift als Card mit Taken-Berechnung
 function renderShifts(shifts) {
   shiftsContainer.innerHTML = shifts
-    .sort((a, b) =>
-      a.title.localeCompare(b.title) ||
-      new Date(a.start_time) - new Date(b.start_time)
-    )
     .map(s => {
       const free = s.max_helpers - s.taken;
       const disabled = free <= 0 ? 'disabled' : '';
@@ -75,40 +63,43 @@ function renderShifts(shifts) {
     .join('');
 }
 
-// setzt Click- und Submit-Handler
+// Bindet Klick- und Submit-Handler auf jede Karte
 function bindHandlers() {
-  // Formular anzeigen
-  shiftsContainer.querySelectorAll('.btn-show-form')
-    .forEach(btn => {
-      btn.addEventListener('click', () => {
-        shiftsContainer.querySelectorAll('.reg-form')
-          .forEach(f => (f.style.display = 'none'));
-        const form = btn.nextElementSibling;
-        form.style.display = 'block';
-        form.scrollIntoView({ behavior: 'smooth' });
-      });
+  // „Anmelden“-Button öffnet das Inline-Formular
+  shiftsContainer.querySelectorAll('.btn-show-form').forEach(btn => {
+    btn.addEventListener('click', () => {
+      // alle anderen schließen
+      shiftsContainer.querySelectorAll('.reg-form')
+        .forEach(f => (f.style.display = 'none'));
+      // dieses öffnen
+      const form = btn.nextElementSibling;
+      form.style.display = 'block';
+      form.scrollIntoView({ behavior: 'smooth', block: 'center' });
     });
-  // Formular absenden
-  shiftsContainer.querySelectorAll('.reg-form')
-    .forEach(form => {
-      form.addEventListener('submit', async e => {
-        e.preventDefault();
-        const card     = form.closest('.shift-card');
-        const shift_id = +card.dataset.id;
-        const email    = form.email.value.trim();
-        const name     = form.name.value.trim() || null;
-        const msgEl    = form.querySelector('.reg-msg');
-        try {
-          await registerHelper({ shift_id, email, name });
-          msgEl.style.color = 'green';
-          msgEl.textContent = 'Danke, deine Anmeldung ist eingegangen!';
-          form.reset();
-          // neu rendern
-          eventSelect.dispatchEvent(new Event('change'));
-        } catch (err) {
-          msgEl.style.color = 'red';
-          msgEl.textContent = err.message || 'Fehler bei der Anmeldung.';
-        }
-      });
+  });
+
+  // Formular-Submit je Karte
+  shiftsContainer.querySelectorAll('.reg-form').forEach(form => {
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      const card     = form.closest('.shift-card');
+      const shift_id = +card.dataset.id;
+      const email    = form.email.value.trim();
+      const name     = form.name.value.trim() || null;
+      const msgEl    = form.querySelector('.reg-msg');
+
+      try {
+        await registerHelper({ shift_id, email, name });
+        msgEl.style.color = 'green';
+        msgEl.textContent = 'Danke, deine Anmeldung ist eingegangen!';
+        form.reset();
+        // Refresh: neu rendern
+        eventSelect.dispatchEvent(new Event('change'));
+      } catch (err) {
+        console.error(err);
+        msgEl.style.color = 'red';
+        msgEl.textContent = err.message || 'Fehler bei der Anmeldung.';
+      }
     });
+  });
 }

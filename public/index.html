@@ -2,107 +2,68 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>FestHelfer</title>
   <style>
-    /* Basis-Stile */
+    /* Basis-Styles, kannst du später auslagern */
     body {
       font-family: sans-serif;
-      margin: 1em auto;
-      max-width: 640px;
-      padding: 0 1em;
-      line-height: 1.5;
+      margin: 0;
+      padding: 1em;
+      box-sizing: border-box;
+      max-width: 800px;
+      margin-left: auto;
+      margin-right: auto;
     }
     h1 {
       text-align: center;
-      margin-bottom: 1em;
     }
-    #event-container {
-      margin-bottom: 1.5em;
+    #event-select-container {
+      margin: 1em 0;
+      text-align: center;
     }
-    label {
-      display: block;
-      margin-bottom: .5em;
-      font-weight: bold;
-    }
-    select {
+    #event-select {
       width: 100%;
-      padding: .5em;
+      max-width: 400px;
+      padding: 0.5em;
       font-size: 1em;
-      border: 1px solid #ccc;
-      border-radius: 4px;
     }
-
-    /* Shift-Cards */
     .shift-card {
-      border: 1px solid #ddd;
-      border-radius: 8px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
       padding: 1em;
       margin-bottom: 1em;
-      background: #fff;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      background: #fafafa;
     }
     .shift-card h3 {
       margin-top: 0;
-      margin-bottom: .5em;
-      font-size: 1.2em;
     }
-    .shift-card p {
-      margin: .3em 0;
-    }
-    .shift-card button {
-      margin-top: .8em;
-      padding: .5em 1em;
-      font-size: 1em;
-    }
-
-    /* Inline-Form */
-    .reg-form {
-      margin-top: 1em;
+    #registration-container {
+      border-top: 1px solid #ddd;
       padding-top: 1em;
-      border-top: 1px solid #eee;
+      margin-top: 2em;
     }
-    .reg-form input {
+    #reg-form input, #reg-form select {
       width: 100%;
-      padding: .5em;
-      margin: .4em 0;
-      font-size: 1em;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      box-sizing: border-box;
-    }
-    .reg-form button {
-      padding: .5em 1em;
+      max-width: 300px;
+      padding: 0.5em;
+      margin-bottom: 1em;
       font-size: 1em;
     }
-    .reg-msg {
-      margin-top: .5em;
-      font-size: .9em;
+    #reg-form button {
+      padding: 0.5em 1em;
+      font-size: 1em;
     }
-
-    /* Responsive für Smartphones */
-    @media (max-width: 480px) {
+    #reg-msg {
+      margin-top: 0.5em;
+    }
+    /* Mobile: alles fluid */
+    @media (max-width: 600px) {
       body {
-        margin: .5em;
-        padding: 0 .5em;
+        padding: 0.5em;
       }
-      h1 {
-        font-size: 1.5em;
-      }
-      .shift-card {
-        padding: .8em;
-      }
-      .shift-card h3 {
-        font-size: 1.1em;
-      }
-      .shift-card button,
-      .reg-form button {
-        width: 100%;
-        box-sizing: border-box;
-      }
-      select,
-      .reg-form input {
-        font-size: .95em;
+      #event-select, #reg-form input, #reg-form select {
+        max-width: 100%;
       }
     }
   </style>
@@ -110,16 +71,36 @@
 <body>
   <h1>FestHelfer</h1>
 
-  <!-- Veranstaltungsauswahl -->
-  <div id="event-container">
-    <label for="event-select">Veranstaltung wählen:</label>
+  <!-- 1) Event-Auswahl -->
+  <div id="event-select-container">
+    <label for="event-select">Veranstaltung wählen:</label><br/>
     <select id="event-select">
-      <option value="">Lade …</option>
+      <option value="">-- bitte wählen --</option>
     </select>
   </div>
 
-  <!-- Shift-Cards -->
+  <!-- 2) Shifts-Anzeige -->
   <div id="shifts-container"></div>
+
+  <!-- 3) Helfer-Registrierung (erst nach Shift-Auswahl sichtbar) -->
+  <div id="registration-container" style="display:none;">
+    <h2>Helfer registrieren</h2>
+    <form id="reg-form">
+      <label for="reg-shift">Einsatz wählen:</label><br/>
+      <select id="reg-shift" required>
+        <option value="">-- bitte wählen --</option>
+      </select><br/>
+
+      <label for="reg-email">E-Mail:</label><br/>
+      <input id="reg-email" type="email" required /><br/>
+
+      <label for="reg-name">Name (optional):</label><br/>
+      <input id="reg-name" type="text" /><br/>
+
+      <button type="submit">Anmelden</button>
+    </form>
+    <p id="reg-msg"></p>
+  </div>
 
   <script type="module" src="main.js"></script>
 </body>

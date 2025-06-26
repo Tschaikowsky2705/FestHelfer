@@ -1,114 +1,148 @@
-// public/main.js
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>FestHelfer</title>
+  <style>
+    /* Base Styles */
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f5f5f5;
+      color: #333;
+      line-height: 1.5;
+    }
+    h1 {
+      margin: .5em 0;
+      text-align: center;
+      font-size: 1.8em;
+    }
+    label {
+      font-weight: bold;
+      margin-bottom: .3em;
+      display: block;
+    }
+    select, input, button {
+      font-size: 1em;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
 
-import { fetchEvents, fetchShifts, registerHelper } from './submit.js';
+    /* Container */
+    .container {
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 1em;
+    }
 
-const eventSelect     = document.getElementById('event-select');
-const shiftsContainer = document.getElementById('shifts-container');
+    /* Event Dropdown */
+    #event-select {
+      width: 100%;
+      padding: .8em;
+      margin-bottom: 1em;
+    }
 
-// 1) Veranstaltungen laden
-async function loadEvents() {
-  try {
-    const events = await fetchEvents();
-    eventSelect.innerHTML = '<option value="">-- bitte wählen --</option>';
-    events.forEach(e => {
-      const opt = document.createElement('option');
-      opt.value       = e.id;
-      opt.textContent = `${e.name} (${e.date})`;
-      eventSelect.appendChild(opt);
-    });
-  } catch (err) {
-    console.error('Fehler beim Laden der Veranstaltungen:', err);
-    eventSelect.innerHTML = '<option>(Fehler beim Laden)</option>';
-  }
-}
-loadEvents();
+    /* Shift Card */
+    .shift-card {
+      background: #fff;
+      border-radius: 6px;
+      margin-bottom: 1em;
+      padding: 1em;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .shift-card h3 {
+      margin: 0 0 .5em;
+      font-size: 1.3em;
+    }
+    .shift-card p {
+      margin: .4em 0;
+      font-size: .95em;
+    }
+    .shift-card .spots {
+      margin-top: .6em;
+      font-style: italic;
+      color: #555;
+    }
+    .shift-card button.btn-signup {
+      width: 100%;
+      padding: .8em;
+      background: #0070f3;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      margin-top: .8em;
+    }
+    .shift-card button.btn-signup:disabled {
+      background: #999;
+    }
 
-// 2) Wenn Event gewählt wird: Shifts holen & rendern
-eventSelect.addEventListener('change', async () => {
-  const eventId = +eventSelect.value;
-  shiftsContainer.innerHTML = '';
-  if (!eventId) return;
+    /* Inline Registration Form */
+    .signup-form {
+      display: none;
+      margin-top: 1em;
+      padding-top: 1em;
+      border-top: 1px solid #eee;
+    }
+    .signup-form input {
+      width: 100%;
+      padding: .6em;
+      margin: .4em 0;
+    }
+    .signup-form button {
+      width: 100%;
+      padding: .8em;
+      background: #28a745;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      margin-top: .6em;
+    }
+    .signup-form .msg {
+      margin-top: .6em;
+      font-size: .9em;
+    }
 
-  try {
-    const shifts = await fetchShifts(eventId);
-    renderShifts(shifts);
-  } catch (err) {
-    console.error('Fehler beim Laden der Einsätze:', err);
-    shiftsContainer.innerHTML = '<p style="color:red;">Einsätze konnten nicht geladen werden.</p>';
-  }
-});
-
-// 3) Shifts rendern
-function renderShifts(shifts) {
-  shiftsContainer.innerHTML = shifts.map(s => {
-    const free = s.max_helpers - s.taken;  // <— freie Plätze
-    return `
-    <div class="shift-card" data-shift-id="${s.id}">
-      <h3>${s.title}</h3>
-      <p>${s.description}</p>
-      <p><strong>Zeit:</strong>
-         ${new Date(s.start_time).toLocaleString()} – 
-         ${new Date(s.end_time).toLocaleString()}
-      </p>
-      <p><strong>Erwartung:</strong> ${s.expectations}</p>
-      <p><em>${free} von ${s.max_helpers} Plätzen frei</em></p>
-      <button class="btn-signup" ${free <= 0 ? 'disabled' : ''}>
-        ${free > 0 ? 'Anmelden' : 'Ausgebucht'}
-      </button>
-
-      <form class="signup-form" style="display:none; margin-top:1em;">
-        <input type="hidden" name="shift_id" value="${s.id}">
-        <div>
-          <label>E-Mail:</label><br>
-          <input type="email" name="email" required style="width:100%;">
-        </div>
-        <div style="margin-top:0.5em">
-          <label>Name (optional):</label><br>
-          <input type="text" name="name" style="width:100%;">
-        </div>
-        <button type="submit" style="margin-top:0.5em;">Absenden</button>
-        <div class="msg" style="margin-top:0.5em;"></div>
-      </form>
-    </div>`;
-  }).join('');
-
-  // 4) Handler binden
-  shiftsContainer.querySelectorAll('.shift-card').forEach(card => {
-    const btn   = card.querySelector('.btn-signup');
-    const form  = card.querySelector('.signup-form');
-    const msg   = card.querySelector('.msg');
-    const spots = card.querySelector('p em');
-
-    btn.addEventListener('click', () => {
-      form.style.display = 'block';
-      form.scrollIntoView({ behavior: 'smooth' });
-    });
-
-    form.addEventListener('submit', async ev => {
-      ev.preventDefault();
-      const fd       = new FormData(form);
-      const shift_id = +fd.get('shift_id');
-      const email    = fd.get('email').trim();
-      const name     = fd.get('name').trim() || null;
-
-      try {
-        await registerHelper({ shift_id, email, name });
-
-        msg.style.color   = 'green';
-        msg.textContent   = 'Danke! Dein Eintrag wurde gespeichert.';
-
-        // Plätze neu laden und aktualisieren
-        const updatedShifts = await fetchShifts(+eventSelect.value);
-        const updated      = updatedShifts.find(x => x.id === shift_id);
-        const freeUpdated  = updated.max_helpers - updated.taken;
-        spots.textContent  = `${freeUpdated} von ${updated.max_helpers} Plätzen frei`;
-
-        form.reset();
-      } catch (err) {
-        console.error('Fehler bei der Registrierung:', err);
-        msg.style.color   = 'red';
-        msg.textContent   = 'Fehler beim Speichern. Bitte später nochmal probieren.';
+    /* Media Queries */
+    @media (min-width: 481px) {
+      .container {
+        max-width: 600px;
       }
-    });
-  });
-}
+      .shift-card {
+        display: flex;
+        flex-direction: column;
+      }
+      .shift-card h3 {
+        font-size: 1.5em;
+      }
+      .shift-card button.btn-signup {
+        max-width: 200px;
+        margin-left: auto;
+      }
+      .signup-form button {
+        max-width: 200px;
+        margin-left: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>FestHelfer</h1>
+
+    <!-- Event-Auswahl -->
+    <label for="event-select">Veranstaltung wählen:</label>
+    <select id="event-select">
+      <option value="">– bitte wählen –</option>
+    </select>
+
+    <!-- Container für die Shift-Cards -->
+    <div id="shifts-container"></div>
+  </div>
+
+  <!-- Hauptskript -->
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

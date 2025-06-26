@@ -12,8 +12,8 @@ module.exports = async (req, res) => {
   const { email, name, shiftTitle } = req.body;
 
   // 2) SMTP-Daten aus ENV
-  const user = process.env.open-air-kino.frauenkappelen@gmx.ch;
-  const pass = process.env.CNAek24bhjcnM4i;
+  const user = open-air-kino.frauenkappelen@gmx.ch;
+  const pass = CNAek24bhjcnM4i;
   if (!user || !pass) {
     console.error('🚨 Missing GMX env vars', { user, pass });
     return res.status(500).json({ error: 'SMTP credentials not set' });

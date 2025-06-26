@@ -1,33 +1,30 @@
 // api/sendNotification.js
-
-// 1) nodemailer mit CommonJS einbinden
 const nodemailer = require('nodemailer');
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
-    res.status(405).send('Method Not Allowed');
-    return;
+    return res.status(405).send('Method Not Allowed');
   }
 
   const { email, name, shiftTitle } = req.body;
 
-  // 2) SMTP-Daten aus ENV
-  const user = open-air-kino.frauenkappelen@gmx.ch;
-  const pass = CNAek24bhjcnM4i;
+  // 1) SMTP-Zugangsdaten aus ENV ziehen
+  const user = process.env.open-air-kino.frauenkappelen@gmx.ch;
+  const pass = process.env.CNAek24bhjcnM4i;
   if (!user || !pass) {
     console.error('🚨 Missing GMX env vars', { user, pass });
     return res.status(500).json({ error: 'SMTP credentials not set' });
   }
 
-  // 3) Transporter anlegen
+  // 2) nodemailer-Transporter konfigurieren
   const transporter = nodemailer.createTransport({
     host: 'mail.gmx.net',
     port: 587,
-    secure: false,           // TLS später
-    auth: { user, pass }
+    secure: false,
+    auth: { user, pass },
   });
 
-  // 4) Mail-Optionen
+  // 3) Mail-Optionen
   const mailOptions = {
     from: `"FestHelfer" <${user}>`,
     to: 'uwe.baumann@ortsverein-frauenkappelen.ch',
@@ -38,13 +35,13 @@ Ein neuer Helfer hat sich registriert:
 • E-Mail:   ${email}
 • Name:     ${name || '(keine Angabe)'}
 • Einsatz:  ${shiftTitle}
-`
+`,
   };
 
-  // 5) Abschicken und Fehler abfangen
+  // 4) Abschicken und Rückmeldung
   try {
     const info = await transporter.sendMail(mailOptions);
-    console.log('✅ sendMail success', info);
+    console.log('✅ sendMail success', info.response);
     return res.status(200).json({ ok: true });
   } catch (err) {
     console.error('❌ sendMail error', err);

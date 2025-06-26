@@ -1,20 +1,17 @@
-import {
-  fetchEvents,
-  fetchShifts,
-  registerHelper
-} from './submit.js';
+// public/main.js
+import { fetchEvents, fetchShifts, registerHelper } from './submit.js';
 
 const eventSelect     = document.getElementById('event-select');
 const shiftsContainer = document.getElementById('shifts-container');
+const regContainer    = document.getElementById('registration-container');
+const regShiftSelect  = document.getElementById('reg-shift');
+const regForm         = document.getElementById('reg-form');
+const regMsg          = document.getElementById('reg-msg');
 
-console.log('main.js geladen');
-
-// 1) Events laden
+// 1) Beim Laden: Veranstaltungen holen
 async function loadEvents() {
-  console.log('main.js → loadEvents()');
   try {
     const events = await fetchEvents();
-    console.log('main.js → Events:', events);
     eventSelect.innerHTML = '<option value="">-- bitte wählen --</option>';
     events.forEach(e => {
       const opt = document.createElement('option');
@@ -23,82 +20,94 @@ async function loadEvents() {
       eventSelect.appendChild(opt);
     });
   } catch (err) {
-    console.error('main.js → loadEvents ERROR:', err);
-    eventSelect.innerHTML = '<option value="">(Fehler beim Laden der Veranstaltungen)</option>';
+    console.error('Fehler beim Laden der Veranstaltungen:', err);
+    eventSelect.innerHTML = `<option value="">(Fehler beim Laden)</option>`;
   }
 }
 loadEvents();
 
-// 2) Bei Änderung Event → Shifts laden
-eventSelect.addEventListener('change', async () => {
-  const eventId = +eventSelect.value;
-  console.log('main.js → Event ausgewählt:', eventId);
-  shiftsContainer.innerHTML = '';
+// 2) Wenn Event gewählt: Shifts und Registrierung aufbauen
+eventSelect.addEventListener('change', async (e) => {
+  const eventId = +e.target.value;
+  clearShifts();
+  clearRegistration();
   if (!eventId) return;
 
   try {
     const shifts = await fetchShifts(eventId);
-    console.log('main.js → Shifts:', shifts);
     renderShifts(shifts);
-    bindHandlers();
+    setupRegistration(shifts);
   } catch (err) {
-    console.error('main.js → fetchShifts ERROR:', err);
-    shiftsContainer.innerHTML = '<p style="color:red;">(Fehler beim Laden der Einsätze)</p>';
+    console.error('Fehler beim Laden der Einsätze:', err);
+    shiftsContainer.innerHTML = `<p style="color:red;">Einsätze konnten nicht geladen werden.</p>`;
   }
 });
 
+// Hilfsfunktionen
+function clearShifts() {
+  shiftsContainer.innerHTML = '';
+}
 function renderShifts(shifts) {
-  shiftsContainer.innerHTML = shifts
-    .map(s => {
-      const free     = s.max_helpers - s.taken;
-      const disabled = free <= 0 ? 'disabled' : '';
-      return `
-      <div class="shift-card" data-id="${s.id}">
-        <h3>${s.title}</h3>
-        <p>${s.description}</p>
-        <p><strong>Zeit:</strong> ${new Date(s.start_time).toLocaleString()} – ${new Date(s.end_time).toLocaleString()}</p>
-        <p><em>${free} von ${s.max_helpers} frei</em></p>
-        <button class="btn-show-form" ${disabled}>${free>0?'Anmelden':'Ausgebucht'}</button>
-        <form class="reg-form">
-          <input type="email" name="email" placeholder="E-Mail" required />
-          <input type="text"  name="name"  placeholder="Name (optional)" />
-          <button type="submit">Absenden</button>
-          <p class="reg-msg"></p>
-        </form>
-      </div>`;
-    })
-    .join('');
+  shiftsContainer.innerHTML = shifts.map(s => `
+    <div class="shift-card">
+      <h3>${s.title}</h3>
+      <p>${s.description}</p>
+      <p><strong>Zeit:</strong>
+        ${new Date(s.start_time).toLocaleString()} – 
+        ${new Date(s.end_time).toLocaleString()}
+      </p>
+      <p><strong>Erwartung:</strong> ${s.expectations}</p>
+      <button data-shift-id="${s.id}" class="btn-choose">Anmelden</button>
+    </div>
+  `).join('');
+
+  // Buttons „Anmelden“ auf jede Karte binden
+  document.querySelectorAll('.btn-choose').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = +btn.getAttribute('data-shift-id');
+      regShiftSelect.value = id;
+      regContainer.style.display = 'block';
+      // Scroll zur Anmeldung
+      regContainer.scrollIntoView({ behavior: 'smooth' });
+    });
+  });
 }
 
-function bindHandlers() {
-  shiftsContainer.querySelectorAll('.btn-show-form').forEach(btn => {
-    btn.addEventListener('click', () => {
-      shiftsContainer.querySelectorAll('.reg-form').forEach(f => f.style.display = 'none');
-      const form = btn.nextElementSibling;
-      form.style.display = 'block';
-      form.scrollIntoView({ behavior:'smooth' });
-    });
-  });
-  shiftsContainer.querySelectorAll('.reg-form').forEach(form => {
-    form.addEventListener('submit', async e => {
-      e.preventDefault();
-      const card     = form.closest('.shift-card');
-      const shift_id = +card.dataset.id;
-      const email    = form.email.value.trim();
-      const name     = form.name.value.trim() || null;
-      const msgEl    = form.querySelector('.reg-msg');
-      console.log('main.js → submit for shift', shift_id, email, name);
-      try {
-        await registerHelper({ shift_id, email, name });
-        msgEl.style.color   = 'green';
-        msgEl.textContent   = 'Danke, deine Anmeldung ist eingegangen!';
-        form.reset();
-        eventSelect.dispatchEvent(new Event('change'));
-      } catch (err) {
-        console.error('main.js → registerHelper ERROR:', err);
-        msgEl.style.color   = 'red';
-        msgEl.textContent   = 'Fehler bei der Anmeldung.';
-      }
-    });
-  });
+function clearRegistration() {
+  regContainer.style.display    = 'none';
+  regShiftSelect.innerHTML      = '<option value="">-- bitte wählen --</option>';
+  regMsg.textContent            = '';
 }
+function setupRegistration(shifts) {
+  // Dropdown für Shifts befüllen
+  regShiftSelect.innerHTML = '<option value="">-- bitte wählen --</option>';
+  shifts.forEach(s => {
+    const opt = document.createElement('option');
+    opt.value       = s.id;
+    opt.textContent = `${s.title} (${new Date(s.start_time).toLocaleTimeString()})`;
+    regShiftSelect.appendChild(opt);
+  });
+  // Formular anzeigen
+  regContainer.style.display = 'block';
+}
+
+// 3) Registrierung abschicken
+regForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const shift_id = +regShiftSelect.value;
+  const email    = document.getElementById('reg-email').value.trim();
+  const name     = document.getElementById('reg-name').value.trim() || null;
+
+  try {
+    await registerHelper({ shift_id, email, name });
+    regMsg.style.color   = 'green';
+    regMsg.textContent   = 'Danke! Dein Eintrag wurde gespeichert.';
+    regForm.reset();
+    // optional: verschwindet die Box wieder?
+    // setTimeout(() => clearRegistration(), 2000);
+  } catch (err) {
+    console.error('Fehler bei der Anmeldung:', err);
+    regMsg.style.color   = 'red';
+    regMsg.textContent   = 'Fehler beim Speichern. Bitte versuche es später erneut.';
+  }
+});

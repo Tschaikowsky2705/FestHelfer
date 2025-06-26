@@ -28,7 +28,7 @@ export default async function handler(req, res) {
 
   // 2) E-Mail an Uwe zusammenbauen
   const mailOptions = {
-    from: `"FestHelfer App" <${process.env.GMX_USER}>`,
+    from: `"FestHelfer App" <${process.env.open-air-kino.frauenkappelen@gmx.ch}>`,
     to: "uwe.baumann@ortsverein-frauenkappelen.ch",
     subject: `Neue Helfer-Anmeldung: ${shiftTitle}`,
     text: `

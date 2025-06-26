@@ -1,148 +1,76 @@
-<!DOCTYPE html>
-<html lang="de">
-<head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>FestHelfer</title>
-  <style>
-    /* Base Styles */
-    body {
-      font-family: sans-serif;
-      margin: 0;
-      padding: 0;
-      background: #f5f5f5;
-      color: #333;
-      line-height: 1.5;
-    }
-    h1 {
-      margin: .5em 0;
-      text-align: center;
-      font-size: 1.8em;
-    }
-    label {
-      font-weight: bold;
-      margin-bottom: .3em;
-      display: block;
-    }
-    select, input, button {
-      font-size: 1em;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      box-sizing: border-box;
-    }
+// main.js
+import { fetchEvents, fetchShifts } from './submit.js';
 
-    /* Container */
-    .container {
-      max-width: 480px;
-      margin: 0 auto;
-      padding: 1em;
-    }
+const eventSelect     = document.getElementById('event-select');
+const shiftsContainer = document.getElementById('shifts-container');
 
-    /* Event Dropdown */
-    #event-select {
-      width: 100%;
-      padding: .8em;
-      margin-bottom: 1em;
-    }
+/**
+ * Lädt alle Events aus Supabase und füllt das Dropdown.
+ */
+async function loadEvents() {
+  try {
+    const events = await fetchEvents();
+    // erstes Default‐Option
+    eventSelect.innerHTML = '<option value="">-- bitte wählen --</option>';
+    // jede Veranstaltung als Option anhängen
+    events.forEach(e => {
+      const opt = document.createElement('option');
+      opt.value       = e.id;
+      opt.textContent = `${e.name} (${e.date})`;
+      eventSelect.appendChild(opt);
+    });
+    // wenn Du willst, direkt den ersten auswählen:
+    // if (events.length) eventSelect.value = events[0].id;
+  } catch (err) {
+    console.error('❌ Fehler beim Laden der Veranstaltungen', err);
+    eventSelect.innerHTML = '<option>(Fehler beim Laden)</option>';
+  }
+}
 
-    /* Shift Card */
-    .shift-card {
-      background: #fff;
-      border-radius: 6px;
-      margin-bottom: 1em;
-      padding: 1em;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }
-    .shift-card h3 {
-      margin: 0 0 .5em;
-      font-size: 1.3em;
-    }
-    .shift-card p {
-      margin: .4em 0;
-      font-size: .95em;
-    }
-    .shift-card .spots {
-      margin-top: .6em;
-      font-style: italic;
-      color: #555;
-    }
-    .shift-card button.btn-signup {
-      width: 100%;
-      padding: .8em;
-      background: #0070f3;
-      color: #fff;
-      border: none;
-      border-radius: 4px;
-      margin-top: .8em;
-    }
-    .shift-card button.btn-signup:disabled {
-      background: #999;
-    }
+/**
+ * Rendert die Shifts für das gewählte Event.
+ */
+async function handleEventChange() {
+  const eventId = eventSelect.value;
+  // wenn nichts gewählt, leeren
+  if (!eventId) {
+    shiftsContainer.innerHTML = '';
+    return;
+  }
+  try {
+    const shifts = await fetchShifts(+eventId);
+    // nach Titel sortieren, dann nach Zeit
+    shifts.sort((a, b) => {
+      if (a.title < b.title) return -1;
+      if (a.title > b.title) return  1;
+      return new Date(a.start_time) - new Date(b.start_time);
+    });
+    // Ausgabe
+    shiftsContainer.innerHTML = shifts.map(s => `
+      <div class="shift-card">
+        <h3>${s.title}</h3>
+        <p>${s.description}</p>
+        <p>
+          <strong>Zeit:</strong>
+          ${new Date(s.start_time).toLocaleString()} – 
+          ${new Date(s.end_time)  .toLocaleString()}
+        </p>
+      </div>
+    `).join('');
+  } catch (err) {
+    console.error('❌ Fehler beim Laden der Einsätze', err);
+    shiftsContainer.innerHTML = '<p>Fehler beim Laden der Einsätze</p>';
+  }
+}
 
-    /* Inline Registration Form */
-    .signup-form {
-      display: none;
-      margin-top: 1em;
-      padding-top: 1em;
-      border-top: 1px solid #eee;
-    }
-    .signup-form input {
-      width: 100%;
-      padding: .6em;
-      margin: .4em 0;
-    }
-    .signup-form button {
-      width: 100%;
-      padding: .8em;
-      background: #28a745;
-      color: #fff;
-      border: none;
-      border-radius: 4px;
-      margin-top: .6em;
-    }
-    .signup-form .msg {
-      margin-top: .6em;
-      font-size: .9em;
-    }
-
-    /* Media Queries */
-    @media (min-width: 481px) {
-      .container {
-        max-width: 600px;
-      }
-      .shift-card {
-        display: flex;
-        flex-direction: column;
-      }
-      .shift-card h3 {
-        font-size: 1.5em;
-      }
-      .shift-card button.btn-signup {
-        max-width: 200px;
-        margin-left: auto;
-      }
-      .signup-form button {
-        max-width: 200px;
-        margin-left: auto;
-      }
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <h1>FestHelfer</h1>
-
-    <!-- Event-Auswahl -->
-    <label for="event-select">Veranstaltung wählen:</label>
-    <select id="event-select">
-      <option value="">– bitte wählen –</option>
-    </select>
-
-    <!-- Container für die Shift-Cards -->
-    <div id="shifts-container"></div>
-  </div>
-
-  <!-- Hauptskript -->
-  <script type="module" src="./main.js"></script>
-</body>
-</html>
+//
+// Setup
+//
+if (!eventSelect) {
+  console.error('Element #event-select nicht gefunden!');
+} else {
+  // beim Wechsel neu laden
+  eventSelect.addEventListener('change', handleEventChange);
+  // und beim Start alle Events laden
+  loadEvents();
+}

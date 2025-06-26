@@ -25,7 +25,7 @@ async function loadEvents() {
 }
 loadEvents();
 
-// 2) Wenn Event gewählt wird: Shifts laden
+// 2) Wenn Event gewählt wird, Shifts laden
 eventSelect.addEventListener('change', async () => {
   const eventId = +eventSelect.value;
   shiftsContainer.innerHTML = '';
@@ -50,15 +50,15 @@ function renderShifts(shifts) {
          ${new Date(s.start_time).toLocaleString()} –
          ${new Date(s.end_time).toLocaleString()}
       </p>
+      <p><strong>Erwartung:</strong> ${s.expectations}</p>
       <button data-shift-id="${s.id}">Anmelden</button>
     </div>
   `).join('');
 
-  // Buttons binden
+  // jeden Button anclick binden
   shiftsContainer.querySelectorAll('button[data-shift-id]')
     .forEach(btn => btn.addEventListener('click', () => {
-      const shiftId = btn.getAttribute('data-shift-id');
-      showRegistrationFor(shiftId);
+      showRegistrationFor(btn.dataset.shiftId);
     }));
 }
 

@@ -1,11 +1,10 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>FestHelfer</title>
   <style>
-    /* Basis-Layout */
     body {
       margin: 0;
       padding: 1em;
@@ -20,28 +19,25 @@
       text-align: center;
       margin-bottom: 1em;
     }
-
-    /* Formular */
     label {
       display: block;
-      margin-bottom: 0.5em;
       font-weight: bold;
+      margin-bottom: 0.5em;
     }
     select {
       width: 100%;
-      padding: 0.5em;
+      padding: 0.6em;
       font-size: 1em;
       margin-bottom: 1em;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
     }
-
-    /* Infotext */
     .info {
       text-align: center;
       color: #666;
       margin: 1em 0;
     }
-
-    /* Shift-Karte */
     .shift-card {
       background: #fff;
       border: 1px solid #ddd;
@@ -53,8 +49,58 @@
     .shift-card h3 {
       margin-top: 0;
     }
-
-    /* Mobile Tweaks */
+    .shift-card p {
+      margin: 0.5em 0;
+    }
+    .spots {
+      font-style: italic;
+      color: #555;
+    }
+    .btn-signup {
+      display: block;
+      width: 100%;
+      padding: 0.8em;
+      background: #0070f3;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      font-size: 1em;
+      margin-top: 0.8em;
+      cursor: pointer;
+    }
+    .btn-signup:disabled {
+      background: #999;
+      cursor: not-allowed;
+    }
+    .signup-form {
+      display: none;
+      margin-top: 1em;
+      padding-top: 1em;
+      border-top: 1px solid #eee;
+    }
+    .signup-form input {
+      width: 100%;
+      padding: 0.6em;
+      margin: 0.4em 0;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    .signup-form button {
+      width: 100%;
+      padding: 0.8em;
+      background: #28a745;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      font-size: 1em;
+      margin-top: 0.6em;
+      cursor: pointer;
+    }
+    .signup-form .msg {
+      margin-top: 0.6em;
+      font-size: 0.9em;
+    }
     @media (max-width: 480px) {
       body { padding: 0.5em; }
       .shift-card { padding: 0.75em; }
@@ -66,11 +112,13 @@
     <h1>FestHelfer</h1>
     <label for="event-select">Veranstaltung wählen:</label>
     <select id="event-select">
-      <option value="">Lade...</option>
+      <option value="">Lade …</option>
     </select>
-    <div id="shifts-container"></div>
+    <div id="shifts-container">
+      <p class="info">Bitte wähle oben eine Veranstaltung aus.</p>
+    </div>
   </div>
 
-  <script type="module" src="main.js"></script>
+  <script type="module" src="./main.js"></script>
 </body>
 </html>

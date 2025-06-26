@@ -1,128 +1,76 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>FestHelfer</title>
   <style>
-    /* Base Styles */
+    /* Basis-Layout */
     body {
-      font-family: sans-serif;
       margin: 0;
-      padding: 0;
+      padding: 1em;
+      font-family: sans-serif;
       background: #f5f5f5;
-      color: #333;
-      line-height: 1.5;
     }
     .container {
-      max-width: 480px;
-      margin: 0 auto;
-      padding: 1em;
+      max-width: 600px;
+      margin: auto;
     }
     h1 {
       text-align: center;
-      margin: .5em 0;
-      font-size: 1.8em;
+      margin-bottom: 1em;
     }
+
+    /* Formular */
     label {
       display: block;
+      margin-bottom: 0.5em;
       font-weight: bold;
-      margin-bottom: .5em;
     }
     select {
       width: 100%;
-      padding: .8em;
+      padding: 0.5em;
       font-size: 1em;
       margin-bottom: 1em;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      box-sizing: border-box;
     }
-    /* Shift Cards */
+
+    /* Infotext */
+    .info {
+      text-align: center;
+      color: #666;
+      margin: 1em 0;
+    }
+
+    /* Shift-Karte */
     .shift-card {
       background: #fff;
+      border: 1px solid #ddd;
       border-radius: 6px;
-      margin-bottom: 1em;
       padding: 1em;
+      margin-bottom: 1em;
       box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
     .shift-card h3 {
       margin-top: 0;
-      font-size: 1.3em;
     }
-    .shift-card p {
-      margin: .4em 0;
-      font-size: .95em;
-    }
-    .shift-card .spots {
-      font-style: italic;
-      color: #555;
-    }
-    .shift-card button {
-      width: 100%;
-      padding: .8em;
-      font-size: 1em;
-      border: none;
-      border-radius: 4px;
-      background: #0070f3;
-      color: #fff;
-      margin-top: .8em;
-    }
-    .shift-card button:disabled {
-      background: #999;
-    }
-    /* Inline-Form */
-    .signup-form {
-      display: none;
-      margin-top: 1em;
-      padding-top: 1em;
-      border-top: 1px solid #eee;
-    }
-    .signup-form input {
-      width: 100%;
-      padding: .6em;
-      margin: .4em 0;
-      box-sizing: border-box;
-    }
-    .signup-form button {
-      width: 100%;
-      padding: .8em;
-      border: none;
-      border-radius: 4px;
-      background: #28a745;
-      color: #fff;
-      margin-top: .6em;
-      font-size: 1em;
-    }
-    .signup-form .msg {
-      margin-top: .6em;
-      font-size: .9em;
-    }
-    @media (min-width: 481px) {
-      .container { max-width: 600px; }
-      .shift-card button,
-      .signup-form button {
-        max-width: 200px;
-        margin-left: auto;
-      }
+
+    /* Mobile Tweaks */
+    @media (max-width: 480px) {
+      body { padding: 0.5em; }
+      .shift-card { padding: 0.75em; }
     }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>FestHelfer</h1>
-
-    <!-- Event-Auswahl -->
     <label for="event-select">Veranstaltung wählen:</label>
     <select id="event-select">
-      <option value="">– bitte wählen –</option>
+      <option value="">Lade...</option>
     </select>
-
-    <!-- Hier kommen die Shift-Karten rein -->
     <div id="shifts-container"></div>
   </div>
 
-  <!-- Dein Hauptskript -->
-  <script type="module" src="./main.js"></script>
+  <script type="module" src="main.js"></script>
 </body>
 </html>

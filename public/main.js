@@ -13,14 +13,21 @@ const regMsg          = document.getElementById('reg-msg');
 
 // 1) Events laden
 async function loadEvents() {
-  const events = await fetchEvents();
-  eventSelect.innerHTML = '<option value="">-- bitte wählen --</option>';
-  events.forEach(e => {
-    const opt = document.createElement('option');
-    opt.value       = e.id;
-    opt.textContent = `${e.name} (${e.date})`;
-    eventSelect.appendChild(opt);
-  });
+  try {
+    console.log('▶️ loadEvents() startet');
+    const events = await fetchEvents();
+    console.log('✅ Events erhalten:', events);
+    eventSelect.innerHTML = '<option value="">-- bitte wählen --</option>';
+    events.forEach(e => {
+      const opt = document.createElement('option');
+      opt.value       = e.id;
+      opt.textContent = `${e.name} (${e.date})`;
+      eventSelect.appendChild(opt);
+    });
+  } catch (err) {
+    console.error('❌ Fehler in loadEvents():', err);
+    eventSelect.innerHTML = '<option value="">(Fehler beim Laden)</option>';
+  }
 }
 loadEvents();
 

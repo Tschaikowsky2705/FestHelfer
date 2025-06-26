@@ -10,17 +10,13 @@ const shiftsContainer = document.getElementById('shifts-container');
 async function loadEvents() {
   try {
     const events = await fetchEvents();
-    // erstes Default‐Option
     eventSelect.innerHTML = '<option value="">-- bitte wählen --</option>';
-    // jede Veranstaltung als Option anhängen
     events.forEach(e => {
       const opt = document.createElement('option');
       opt.value       = e.id;
       opt.textContent = `${e.name} (${e.date})`;
       eventSelect.appendChild(opt);
     });
-    // wenn Du willst, direkt den ersten auswählen:
-    // if (events.length) eventSelect.value = events[0].id;
   } catch (err) {
     console.error('❌ Fehler beim Laden der Veranstaltungen', err);
     eventSelect.innerHTML = '<option>(Fehler beim Laden)</option>';
@@ -28,24 +24,23 @@ async function loadEvents() {
 }
 
 /**
- * Rendert die Shifts für das gewählte Event.
+ * Rendert die Shifts für das gewählte Event,
+ * sortiert nach Titel (alphabetisch) und Startzeit.
  */
 async function handleEventChange() {
   const eventId = eventSelect.value;
-  // wenn nichts gewählt, leeren
   if (!eventId) {
     shiftsContainer.innerHTML = '';
     return;
   }
   try {
-    const shifts = await fetchShifts(+eventId);
-    // nach Titel sortieren, dann nach Zeit
-    shifts.sort((a, b) => {
-      if (a.title < b.title) return -1;
-      if (a.title > b.title) return  1;
-      return new Date(a.start_time) - new Date(b.start_time);
-    });
-    // Ausgabe
+    let shifts = await fetchShifts(+eventId);
+
+    // 1) nach Titel alphabetisch
+    shifts.sort((a, b) => a.title.localeCompare(b.title)
+      || new Date(a.start_time) - new Date(b.start_time));
+
+    // 2) HTML zusammenbauen, jetzt inklusive Erwartung
     shiftsContainer.innerHTML = shifts.map(s => `
       <div class="shift-card">
         <h3>${s.title}</h3>
@@ -55,6 +50,11 @@ async function handleEventChange() {
           ${new Date(s.start_time).toLocaleString()} – 
           ${new Date(s.end_time)  .toLocaleString()}
         </p>
+        <p>
+          <strong>Erwartung:</strong>
+          ${s.expectations}
+        </p>
+        <button data-shift="${s.id}" class="btn-signup">Anmelden</button>
       </div>
     `).join('');
   } catch (err) {
@@ -64,13 +64,11 @@ async function handleEventChange() {
 }
 
 //
-// Setup
+// Event-Handler registrieren & initiales Laden
 //
 if (!eventSelect) {
   console.error('Element #event-select nicht gefunden!');
 } else {
-  // beim Wechsel neu laden
   eventSelect.addEventListener('change', handleEventChange);
-  // und beim Start alle Events laden
   loadEvents();
 }

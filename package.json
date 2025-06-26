@@ -1,11 +1,9 @@
 {
   "name": "festhelfer",
   "version": "1.0.0",
-+ "type": "module",
++  "type": "module",
   "dependencies": {
     "nodemailer": "^6.9.3"
   },
-  "scripts": {
-    "build": "echo 'No build needed'"
-  }
+  …
 }

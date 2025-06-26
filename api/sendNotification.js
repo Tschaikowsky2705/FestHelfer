@@ -1,55 +1,53 @@
 // api/sendNotification.js
 
-import nodemailer from "nodemailer";
+// 1) nodemailer mit CommonJS einbinden
+const nodemailer = require('nodemailer');
 
-export default async function handler(req, res) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+module.exports = async (req, res) => {
+  if (req.method !== 'POST') {
+    res.status(405).send('Method Not Allowed');
+    return;
   }
 
   const { email, name, shiftTitle } = req.body;
 
-  // 1) Transporter mit GMX-SMTP konfigurieren
-  let transporter;
-  try {
-    transporter = nodemailer.createTransport({
-      host: "smtp.gmx.net",
-      port: 587,
-      secure: false, // TLS via STARTTLS
-      auth: {
-        user: process.env.open-air-kino.frauenkappelen@gmx.ch,    // Deine GMX-Adresse
-        pass: process.env.CNAek24bhjcnM4i // Dein GMX-App-Passwort
-      }
-    });
-  } catch (err) {
-    console.error("🚨 Mail transporter init error:", err);
-    return res.status(500).json({ error: "Mail transporter init failed" });
+  // 2) SMTP-Daten aus ENV
+  const user = process.env.open-air-kino.frauenkappelen@gmx.ch;
+  const pass = process.env.CNAek24bhjcnM4i;
+  if (!user || !pass) {
+    console.error('🚨 Missing GMX env vars', { user, pass });
+    return res.status(500).json({ error: 'SMTP credentials not set' });
   }
 
-  // 2) E-Mail an Uwe zusammenbauen
+  // 3) Transporter anlegen
+  const transporter = nodemailer.createTransport({
+    host: 'mail.gmx.net',
+    port: 587,
+    secure: false,           // TLS später
+    auth: { user, pass }
+  });
+
+  // 4) Mail-Optionen
   const mailOptions = {
-    from: `"FestHelfer App" <${process.env.open-air-kino.frauenkappelen@gmx.ch}>`,
-    to: "uwe.baumann@ortsverein-frauenkappelen.ch",
+    from: `"FestHelfer" <${user}>`,
+    to: 'uwe.baumann@ortsverein-frauenkappelen.ch',
     subject: `Neue Helfer-Anmeldung: ${shiftTitle}`,
     text: `
-Ein neuer Helfer hat sich angemeldet:
+Ein neuer Helfer hat sich registriert:
 
-• Einsatz: ${shiftTitle}
 • E-Mail:   ${email}
-• Name:     ${name || "(nicht angegeben)"}
-
-Grüsse,
-Deine FestHelfer-App
-    `.trim()
+• Name:     ${name || '(keine Angabe)'}
+• Einsatz:  ${shiftTitle}
+`
   };
 
-  // 3) E-Mail verschicken
+  // 5) Abschicken und Fehler abfangen
   try {
-    await transporter.sendMail(mailOptions);
-    console.log("📧 Notification sent to Uwe");
-    return res.status(200).json({ success: true });
+    const info = await transporter.sendMail(mailOptions);
+    console.log('✅ sendMail success', info);
+    return res.status(200).json({ ok: true });
   } catch (err) {
-    console.error("🚨 Mail send error:", err);
-    return res.status(500).json({ error: "Failed to send mail" });
+    console.error('❌ sendMail error', err);
+    return res.status(500).json({ error: err.message });
   }
-}
+};

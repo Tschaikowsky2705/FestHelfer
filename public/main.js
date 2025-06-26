@@ -2,12 +2,8 @@ import { fetchEvents, fetchShifts, registerHelper } from './submit.js';
 
 const eventSelect     = document.getElementById('event-select');
 const shiftsContainer = document.getElementById('shifts-container');
-const regContainer    = document.getElementById('registration-container');
-const regForm         = document.getElementById('reg-form');
-const regShiftIdField = document.getElementById('reg-shift-id');
-const regMsg          = document.getElementById('reg-msg');
 
-// 1) Veranstaltungen laden
+// 1)—Veranstaltungen laden
 async function loadEvents() {
   try {
     const events = await fetchEvents();
@@ -25,11 +21,10 @@ async function loadEvents() {
 }
 loadEvents();
 
-// 2) Wenn Event gewählt wird, Shifts laden
+// 2)—Beim Wechsel der Veranstaltung: Shifts holen und rendern
 eventSelect.addEventListener('change', async () => {
   const eventId = +eventSelect.value;
   shiftsContainer.innerHTML = '';
-  hideRegistration();
   if (!eventId) return;
 
   try {
@@ -37,58 +32,83 @@ eventSelect.addEventListener('change', async () => {
     renderShifts(shifts);
   } catch (err) {
     console.error('Fehler beim Laden der Einsätze:', err);
-    shiftsContainer.innerHTML = '<p style="color:red;">Einsätze konnten nicht geladen werden.</p>';
+    shiftsContainer.innerHTML = '<p style="color:red">Einsätze konnten nicht geladen werden.</p>';
   }
 });
 
+// 3)—Hilfsfunktion: alle shift-Karten bauen
 function renderShifts(shifts) {
   shiftsContainer.innerHTML = shifts.map(s => `
-    <div class="shift-card">
+    <div class="shift-card" data-shift-id="${s.id}">
       <h3>${s.title}</h3>
       <p>${s.description}</p>
       <p><strong>Zeit:</strong>
-         ${new Date(s.start_time).toLocaleString()} –
+         ${new Date(s.start_time).toLocaleString()} – 
          ${new Date(s.end_time).toLocaleString()}
       </p>
       <p><strong>Erwartung:</strong> ${s.expectations}</p>
-      <button data-shift-id="${s.id}">Anmelden</button>
+      <p class="spots">
+        <em>${s.registrations.length} von ${s.max_helpers} Plätzen frei</em>
+      </p>
+      <button class="btn-signup">Anmelden</button>
+
+      <!-- Das Formular liegt versteckt in jeder Karte -->
+      <form class="signup-form" style="display:none; margin-top:1em;">
+        <input type="hidden" name="shift_id" value="${s.id}">
+        <div>
+          <label>E-Mail:</label><br>
+          <input type="email" name="email" required style="width:100%;">
+        </div>
+        <div style="margin-top:0.5em">
+          <label>Name (optional):</label><br>
+          <input type="text" name="name" style="width:100%;">
+        </div>
+        <button type="submit" style="margin-top:0.5em;">Absenden</button>
+        <div class="msg" style="margin-top:0.5em;"></div>
+      </form>
     </div>
   `).join('');
 
-  // jeden Button anclick binden
-  shiftsContainer.querySelectorAll('button[data-shift-id]')
-    .forEach(btn => btn.addEventListener('click', () => {
-      showRegistrationFor(btn.dataset.shiftId);
-    }));
+  // 4)—Eventhandler an Buttons und Formulare binden
+  shiftsContainer.querySelectorAll('.shift-card').forEach(card => {
+    const btn  = card.querySelector('.btn-signup');
+    const form = card.querySelector('.signup-form');
+    const msg  = card.querySelector('.msg');
+    const spots= card.querySelector('.spots');
+
+    // Formular ein-/ausklappen
+    btn.addEventListener('click', () => {
+      form.style.display = 'block';
+      form.scrollIntoView({ behavior: 'smooth' });
+    });
+
+    // Formular-Submit
+    form.addEventListener('submit', async ev => {
+      ev.preventDefault();
+      const fd = new FormData(form);
+      const shift_id = +fd.get('shift_id');
+      const email    = fd.get('email').trim();
+      const name     = fd.get('name').trim() || null;
+
+      try {
+        // Registrierung speichern
+        await registerHelper({ shift_id, email, name });
+
+        // Erfolgsmeldung
+        msg.style.color = 'green';
+        msg.textContent = 'Danke! Dein Eintrag wurde gespeichert.';
+
+        // Plätze neu holen & Anzeige updaten
+        const updatedShifts = await fetchShifts(+eventSelect.value);
+        const updated = updatedShifts.find(s => s.id === shift_id);
+        spots.textContent = `${updated.registrations.length} von ${updated.max_helpers} Plätzen frei`;
+
+        form.reset();
+      } catch (err) {
+        console.error('Fehler bei der Registrierung:', err);
+        msg.style.color = 'red';
+        msg.textContent = 'Fehler beim Speichern. Bitte später nochmal probieren.';
+      }
+    });
+  });
 }
-
-function showRegistrationFor(shiftId) {
-  regShiftIdField.value = shiftId;
-  regMsg.textContent     = '';
-  regContainer.style.display = 'block';
-  regForm.scrollIntoView({ behavior: 'smooth' });
-}
-
-function hideRegistration() {
-  regContainer.style.display = 'none';
-  regForm.reset();
-}
-
-// 3) Formular abschicken
-regForm.addEventListener('submit', async e => {
-  e.preventDefault();
-  const shift_id = +regShiftIdField.value;
-  const email    = document.getElementById('reg-email').value.trim();
-  const name     = document.getElementById('reg-name').value.trim() || null;
-
-  try {
-    await registerHelper({ shift_id, email, name });
-    regMsg.style.color = 'green';
-    regMsg.textContent = 'Danke! Dein Eintrag wurde gespeichert.';
-    hideRegistration();
-  } catch (err) {
-    console.error('Fehler bei der Registrierung:', err);
-    regMsg.style.color = 'red';
-    regMsg.textContent = 'Fehler beim Speichern. Bitte versuche es später erneut.';
-  }
-});

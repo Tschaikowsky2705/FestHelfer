@@ -2,52 +2,51 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>FestHelfer</title>
   <style>
-    /* Einfaches Reset/Grundlayout */
-    * { box-sizing: border-box; margin:0; padding:0; }
+    /* ————————————— Grund-Styles wie gehabt ————————————— */
+    * { box-sizing: border-box; margin:0; padding:0 }
     body {
       font-family: sans-serif;
-      line-height: 1.5;
-      padding: 1rem;
       background: #f7f7f7;
+      padding: 1rem;
     }
-
-    header {
-      display: flex;
-      align-items: center;
-      margin-bottom: 1.5rem;
-    }
-    header .logo {
-      height: 60px;
-      margin-right: 1rem;
-    }
-    header h1 {
-      font-size: 1.8rem;
+    h1 {
+      margin-bottom: 1rem;
       color: #333;
     }
-
-    /* Der Rest ist Dein bestehendes CSS… */
-    #event-select-container,
-    #shifts-container,
-    #registration-container {
-      margin-top: 1rem;
+    #event-select-container {
+      margin-bottom: 1rem;
     }
-    .shift-card {
+    #shifts-container .shift-card {
       background: #fff;
       border-radius: 8px;
       padding: 1rem;
       margin-bottom: 1rem;
       box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
-    /* …usw. */
+    /* ————————————— Logo & Header ————————————— */
+    header {
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+    header .logo {
+      display: block;
+      margin: 0 auto 0.5rem;
+      max-height: 80px;
+      width: auto;
+    }
+    /* Wenn Du später Feinschliff fürs Smartphone brauchst: */
+    @media (max-width: 480px) {
+      header .logo { max-height: 60px; }
+    }
   </style>
 </head>
 <body>
 
   <header>
-    <!-- Logo einbinden -->
+    <!-- Logo über dem Titel, zentriert -->
     <img src="logo.png" alt="Ortsverein Frauenkappelen Logo" class="logo" />
     <h1>FestHelfer</h1>
   </header>
@@ -55,14 +54,14 @@
   <div id="event-select-container">
     <label for="event-select">Veranstaltung wählen:</label>
     <select id="event-select">
-      <option value="">Lade...</option>
+      <option value="">-- bitte wählen --</option>
     </select>
   </div>
 
   <div id="shifts-container"></div>
 
   <div id="registration-container" style="display:none;">
-    <!-- Dein Helfer-Registrierungs-Formular -->
+    <!-- Hier kommt Dein Registrierungs‐Formular -->
   </div>
 
   <script type="module" src="main.js"></script>

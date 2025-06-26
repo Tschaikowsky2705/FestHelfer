@@ -5,48 +5,68 @@
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>FestHelfer</title>
   <style>
-    /* ganz knapp: mobile-friendly */
-    body { font-family: sans-serif; margin: 1em; }
-    .shift-card { border:1px solid #ccc; border-radius:6px; padding:1em; margin-bottom:1em; }
-    .shift-card h3 { margin-top:0; }
-    button { padding:0.5em 1em; }
-    #registration-container { border-top:1px solid #eee; padding-top:1em; margin-top:2em; display:none; }
-    @media (max-width:600px) {
-      .shift-card { padding:0.5em; }
-      button { width:100%; }
+    body {
+      font-family: sans-serif;
+      margin: 1em;
+      max-width: 600px;
+      padding: 0 1em;
+    }
+    h1 { text-align: center; }
+    label, select { display: block; width: 100%; margin-bottom: 1em; }
+    select { padding: .5em; font-size: 1em; }
+    .shift-card {
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      padding: 1em;
+      margin-bottom: 1em;
+      background: #fafafa;
+    }
+    .shift-card h3 { margin-top: 0; }
+    .shift-card p { margin: .5em 0; }
+    .shift-card button {
+      padding: .5em 1em;
+      margin-top: .5em;
+      font-size: 1em;
+    }
+    .signup-form {
+      display: none;
+      margin-top: 1em;
+      border-top: 1px solid #eee;
+      padding-top: 1em;
+    }
+    .signup-form input {
+      width: 100%;
+      padding: .5em;
+      margin: .4em 0;
+      box-sizing: border-box;
+    }
+    .signup-form button {
+      padding: .5em 1em;
+      margin-top: .5em;
+    }
+    .signup-form .msg {
+      margin-top: .5em;
+      font-size: .9em;
+    }
+    @media (max-width: 480px) {
+      .shift-card { padding: .8em; }
+      .shift-card button, .signup-form button { width: 100%; }
     }
   </style>
 </head>
 <body>
   <h1>FestHelfer</h1>
 
+  <!-- Event-Auswahl -->
   <label for="event-select">Veranstaltung wählen:</label>
   <select id="event-select">
-    <option>-- bitte wählen --</option>
+    <option value="">– bitte wählen –</option>
   </select>
 
+  <!-- Container für die Shift-Cards -->
   <div id="shifts-container"></div>
 
-  <div id="registration-container">
-    <h2>Helfer registrieren</h2>
-    <form id="reg-form">
-      <!-- verstecktes Feld für shift_id -->
-      <input type="hidden" id="reg-shift-id" name="shift_id" value="">
-      <div>
-        <label for="reg-email">E-Mail:</label><br/>
-        <input type="email" id="reg-email" required style="width:100%"/>
-      </div>
-      <div>
-        <label for="reg-name">Name (optional):</label><br/>
-        <input type="text" id="reg-name" style="width:100%"/>
-      </div>
-      <div style="margin-top:0.5em">
-        <button type="submit">Absenden</button>
-      </div>
-    </form>
-    <p id="reg-msg"></p>
-  </div>
-
-  <script type="module" src="main.js"></script>
+  <!-- Dein Hauptskript -->
+  <script type="module" src="./main.js"></script>
 </body>
 </html>

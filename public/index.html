@@ -1,27 +1,28 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>FestHelfer</title>
   <style>
-    /* ganz grob fürs Smartphone */
-    body { padding: 1em; font-family: sans-serif; }
-    .shift-card { margin-bottom: 1em; border: 1px solid #ddd; border-radius: 4px; padding: 1em; }
-    button { margin-top: .5em; }
-    #registration-container { margin-top:2em; display:none; }
-    @media (max-width: 600px) {
-      .shift-card { padding: .5em; }
-      button, select, input { width: 100%; box-sizing: border-box; }
+    /* ganz knapp: mobile-friendly */
+    body { font-family: sans-serif; margin: 1em; }
+    .shift-card { border:1px solid #ccc; border-radius:6px; padding:1em; margin-bottom:1em; }
+    .shift-card h3 { margin-top:0; }
+    button { padding:0.5em 1em; }
+    #registration-container { border-top:1px solid #eee; padding-top:1em; margin-top:2em; display:none; }
+    @media (max-width:600px) {
+      .shift-card { padding:0.5em; }
+      button { width:100%; }
     }
   </style>
 </head>
 <body>
-
   <h1>FestHelfer</h1>
 
   <label for="event-select">Veranstaltung wählen:</label>
   <select id="event-select">
-    <option value="">– lade Veranstaltungen –</option>
+    <option>-- bitte wählen --</option>
   </select>
 
   <div id="shifts-container"></div>
@@ -29,23 +30,23 @@
   <div id="registration-container">
     <h2>Helfer registrieren</h2>
     <form id="reg-form">
-      <label for="reg-shift">Einsatz:</label>
-      <select id="reg-shift">
-        <option value="">– bitte wählen –</option>
-      </select><br/>
-
-      <label for="reg-email">E-Mail:</label>
-      <input id="reg-email" type="email" required /><br/>
-
-      <label for="reg-name">Name (optional):</label>
-      <input id="reg-name" type="text" /><br/>
-
-      <button type="submit">Absenden</button>
+      <!-- verstecktes Feld für shift_id -->
+      <input type="hidden" id="reg-shift-id" name="shift_id" value="">
+      <div>
+        <label for="reg-email">E-Mail:</label><br/>
+        <input type="email" id="reg-email" required style="width:100%"/>
+      </div>
+      <div>
+        <label for="reg-name">Name (optional):</label><br/>
+        <input type="text" id="reg-name" style="width:100%"/>
+      </div>
+      <div style="margin-top:0.5em">
+        <button type="submit">Absenden</button>
+      </div>
     </form>
     <p id="reg-msg"></p>
   </div>
 
-  <!-- Dein Modul-Script ganz unten, nach allen DOM-Elementen -->
   <script type="module" src="main.js"></script>
 </body>
 </html>
